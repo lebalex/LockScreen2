@@ -81,6 +81,7 @@ import com.google.android.gms.drive.query.SearchableField;
 
 import static android.os.Build.ID;
 import static android.widget.Toast.makeText;
+import static com.google.android.gms.analytics.internal.zzy.cH;
 
 
 public class MainActivity extends AppCompatActivity implements ConnectionCallbacks,
@@ -503,6 +504,25 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 bitMap = mImageView.getDrawingCache();
 
 
+               /* int hh=bitmap.getHeight();
+                int ww=bitmap.getWidth();
+                double c=1;
+                int newH=1;
+                int newW=1;
+                if(hh<=ww)
+                {
+                    c=1920.0/hh;
+                    newH=1920;
+                    newW=(int)(ww*c);
+                }else
+                {
+                    c=1080.0/ww;
+                    newW=1080;
+                    newH=(int)(hh*c);
+                }
+
+                Bitmap bitMap = Bitmap.createScaledBitmap(bitmap, newW, newH, false);*/
+
                 WallpaperManager wallpaperManager = WallpaperManager
                         .getInstance(appContext);
 
@@ -510,10 +530,13 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 wallpaperManager.clear();
                 wallpaperManager.setBitmap(bitMap);
 
+                /*mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                mImageView.setImageBitmap(bitmap2);
+                mImageView.setDrawingCacheEnabled(true);
+                mImageView.buildDrawingCache();
 
 
-
-                wallpaperManager.suggestDesiredDimensions(width, height);
+                wallpaperManager.suggestDesiredDimensions(width, height);*/
 
                 //mImageView.setDrawingCacheEnabled(false);
                 textView.setText("set Wallpaper");
@@ -652,21 +675,48 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 {
                     try {
                     if(mImageView.getScaleType()==ImageView.ScaleType.FIT_CENTER) {
-                        mImageView.scrollBy(-1*scrolX,-1*scrolY);
+                        /*mImageView.scrollBy(-1*scrolX,-1*scrolY);
                         scrolX=0;
                         scrolY=0;
                         mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                         scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
-                        scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();
+                        scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();*/
+                        int hh=bitmap.getHeight();
+                        int ww=bitmap.getWidth();
+                        double c=1;
+                        int newH=1;
+                        int newW=1;
+                        if(hh<=ww)
+                        {
+                            c=1920.0/hh;
+                            newH=1920;
+                            newW=(int)(ww*c);
+                        }else
+                        {
+                            c=1080.0/ww;
+                            newW=1080;
+                            newH=(int)(hh*c);
+                        }
+
+                        Bitmap bitmap2 = Bitmap.createScaledBitmap(bitmap, newW, newH, false);
+
+                        mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        mImageView.setImageBitmap(bitmap2);
+                        mImageView.setDrawingCacheEnabled(true);
+                        mImageView.buildDrawingCache();
                         textView.setText("CENTER_CROP");
 
 
 
                     }
                     else {
-                        mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        /*mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
-                        scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();
+                        scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();*/
+                        mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        mImageView.setImageBitmap(bitmap);
+                        mImageView.setDrawingCacheEnabled(true);
+                        mImageView.buildDrawingCache();
 
 
 
@@ -676,6 +726,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     {
 
                     }
+
 
 
 
