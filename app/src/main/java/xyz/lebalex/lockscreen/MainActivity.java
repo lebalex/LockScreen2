@@ -1,27 +1,23 @@
 package xyz.lebalex.lockscreen;
 
+
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Environment;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.StrictMode;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -31,33 +27,12 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.RotateAnimation;
-import android.webkit.WebView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.drive.Drive;
-
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -69,19 +44,26 @@ import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveApi.DriveContentsResult;
 import com.google.android.gms.drive.DriveContents;
-import com.google.android.gms.drive.DriveFile;
 import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveId;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.metadata.CustomPropertyKey;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
 
-import static android.os.Build.ID;
-import static android.widget.Toast.makeText;
-import static com.google.android.gms.analytics.internal.zzy.cH;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 public class MainActivity extends AppCompatActivity implements ConnectionCallbacks,
@@ -389,6 +371,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         ImageButton imageButtonCheck;
         ImageView mImageView;
         TextView textView;
+        Handler handler = new Handler();
         Bitmap mBitmapToBack;
         Bitmap bitmap;
         private int scrolX, scrolY;
@@ -461,6 +444,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                 scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
                                 scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();
 
+                                //Log.i("Width", ""+bitmap.getWidth());
+                                //Log.i("Height", ""+mImageView.getHeight());
+
                                 textView.setText(urlName);
                                 //Toast.makeText(appContext, bitmap.getWidth()+"-"+bitmap.getHeight(), Toast.LENGTH_SHORT).show();
                             } else {
@@ -493,7 +479,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             new Thread(new Runnable() {
                 public void run() {
 
-                    mImageView.post(new Runnable() {
+                    handler.post(new Runnable() {
                         public void run() {
                             try {
                                 Bitmap bitMap = null;
@@ -712,16 +698,21 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 public void onClick(View v) {
                     try {
                         //Toast.makeText(appContext, scrolX+"-"+scrolY, Toast.LENGTH_SHORT).show();
-                        Bitmap original = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
-                        android.graphics.Matrix matrix = new android.graphics.Matrix();
+                        Bitmap drawable = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
+                        int w = drawable.getWidth();
+                        int h = drawable.getHeight();
+                        Matrix m =  new Matrix();
+                        Bitmap result = Bitmap.createBitmap(drawable, scrolX, scrolY, w-scrolX, h-scrolY, m, false);
+                        //final Drawable drawable = getDrawable();
 
-                        Bitmap result = Bitmap.createBitmap(original, (int) (scrolX / scaleX), (int) (scrolY / scaleY), original.getWidth() - (int) (scrolX / scaleX), original.getHeight() - (int) (scrolY / scaleY), matrix, true);
 
                         mImageView.setImageBitmap(result);
                         mImageView.setDrawingCacheEnabled(true);
                         mImageView.buildDrawingCache();
 
                         mImageView.scrollBy(-1 * scrolX, -1 * scrolY);
+
+
                         scrolX = 0;
                         scrolY = 0;
 
