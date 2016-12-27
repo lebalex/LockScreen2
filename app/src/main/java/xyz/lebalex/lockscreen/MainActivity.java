@@ -102,11 +102,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-    private static Context appContext=null;
+    private static Context appContext = null;
     private static int height = 0;
     private static int width = 0;
     private static final String TAG = "lockscreen";
-    private static String urlName="";
+    private static String urlName = "";
     private static Bitmap mBitmapToSave;
     //private static ImageButton mDimageButton;
     private static ImageView mDmImageView;
@@ -178,13 +178,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     }
                 });*/
 
-                }
+    }
+
     final private ResultCallback<DriveContentsResult> driveContentsCallback = new
             ResultCallback<DriveContentsResult>() {
                 @Override
                 public void onResult(DriveContentsResult result) {
                     if (!result.getStatus().isSuccess()) {
-                       return;
+                        return;
                     }
                     final DriveContents driveContents = result.getDriveContents();
 
@@ -203,42 +204,42 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     // Create the initial metadata - MIME type and title.
                     // Note that the user will be able to change the title later.
 
-                    final String folderName="LockScreen";
+                    final String folderName = "LockScreen";
 
 
                     Query query = new Query.Builder().addFilter(Filters.and(
                             Filters.eq(SearchableField.TITLE, folderName),
                             Filters.eq(SearchableField.TRASHED, false))).build();
                     Drive.DriveApi.query(mGoogleApiClient, query).setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
-                        @Override
-                        public void onResult(DriveApi.MetadataBufferResult result) {
-                            if (!result.getStatus().isSuccess()) {
-                                //showMessage("Problem while retrieving files");
-                                return;
-                            }
-                            MetadataBuffer aaa = result.getMetadataBuffer();
-                            if(aaa.getCount()==0)
-                            {
-                                //create folder
-                                MetadataChangeSet changeSet2 = new MetadataChangeSet.Builder()
-                                        .setTitle(folderName).build();
-                                Drive.DriveApi.getRootFolder(mGoogleApiClient).createFolder(mGoogleApiClient
-                                        , changeSet2).setResultCallback(folderCreatedCallback);
-                                mDmTextView.setText("create folder, try again");
-                            }else {
+                                                                                        @Override
+                                                                                        public void onResult(DriveApi.MetadataBufferResult result) {
+                                                                                            if (!result.getStatus().isSuccess()) {
+                                                                                                //showMessage("Problem while retrieving files");
+                                                                                                return;
+                                                                                            }
+                                                                                            MetadataBuffer aaa = result.getMetadataBuffer();
+                                                                                            if (aaa.getCount() == 0) {
+                                                                                                //create folder
+                                                                                                MetadataChangeSet changeSet2 = new MetadataChangeSet.Builder()
+                                                                                                        .setTitle(folderName).build();
+                                                                                                Drive.DriveApi.getRootFolder(mGoogleApiClient).createFolder(mGoogleApiClient
+                                                                                                        , changeSet2).setResultCallback(folderCreatedCallback);
+                                                                                                mDmTextView.setText("create folder, try again");
+                                                                                            } else {
 
-                                DriveId sFolderId = aaa.get(0).getDriveId();
-                                DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
-                                java.util.Calendar c = java.util.Calendar.getInstance();
-                                MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                                        .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
+                                                                                                DriveId sFolderId = aaa.get(0).getDriveId();
+                                                                                                DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
+                                                                                                java.util.Calendar c = java.util.Calendar.getInstance();
+                                                                                                MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
+                                                                                                        .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
 
-                                folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
-                                        .setResultCallback(fileCallback);
-                                mDmTextView.setText("complite upload");
-                            }
-                        }}
-                        );
+                                                                                                folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
+                                                                                                        .setResultCallback(fileCallback);
+                                                                                                mDmTextView.setText("complite upload");
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                    );
 
 
 
@@ -251,8 +252,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                     folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
                             .setResultCallback(fileCallback);*/
-
-
 
 
                     mDmImageView.setEnabled(true);
@@ -278,24 +277,23 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             if (!result.getStatus().isSuccess()) {
                 //                showMessage("Error while trying to create the folder");
                 return;
-                }
+            }
             //            showMessage("Created a folder: " + result.getDriveFolder().getDriveId());
             DriveId drv = result.getDriveFolder().getDriveId();
-            }
-        };
-
-
+        }
+    };
 
 
     @Override
     public void onConnected(Bundle connectionHint) {
         //Log.i(TAG, "API client connected.");
         if (mBitmapToSave == null) {
-            startActivityForResult(new Intent(MediaStore.ACTION_IMAGE_CAPTURE),REQUEST_CODE_CAPTURE_IMAGE);
+            startActivityForResult(new Intent(MediaStore.ACTION_IMAGE_CAPTURE), REQUEST_CODE_CAPTURE_IMAGE);
             return;
         }
         saveFileToDrive();
     }
+
     @Override
     public void onConnectionSuspended(int cause) {
         Log.i(TAG, "GoogleApiClient connection suspended");
@@ -348,8 +346,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
 
 
-
-
     }
 
 
@@ -385,7 +381,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
          */
         private static final String ARG_SECTION_NUMBER = "section_number";
         View rootView;
-        private String errorLoadBmp="";
+        private String errorLoadBmp = "";
         ImageButton imageButton;
         ImageButton imageButtonBack;
         ImageButton imageButtonResize;
@@ -395,10 +391,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         TextView textView;
         Bitmap mBitmapToBack;
         Bitmap bitmap;
-        private int scrolX,scrolY;
+        private int scrolX, scrolY;
         private android.graphics.Matrix matrix;
-        private float scaleX,scaleY;
-
+        private float scaleX, scaleY;
 
 
         public PlaceholderFragment() {
@@ -417,13 +412,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         }
 
 
-
-        private void loadDate()
-        {
+        private void loadDate() {
             imageButton = (ImageButton) rootView.findViewById(R.id.button);
             textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText("loading ...");
-            RotateAnimation rotateAnimation =new RotateAnimation(0f, 360*10, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f);
+            RotateAnimation rotateAnimation = new RotateAnimation(0f, 360 * 10, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f);
 
             rotateAnimation.setStartOffset(1);
             rotateAnimation.setRepeatCount(-1);
@@ -437,22 +430,18 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             mBitmapToBack = bitmap;
 
 
-
             new Thread(new Runnable() {
                 public void run() {
                     final TextView textView = (TextView) rootView.findViewById(R.id.section_label);
                     int sn = getArguments().getInt(ARG_SECTION_NUMBER);
-                    if(sn==3)
-                    {
+                    if (sn == 3) {
                         //google drive
                         bitmap = loadImageFromGoogleDrive();
-                    }else
+                    } else
                         bitmap = loadImageFromNetwork(sn);
                     mImageView.post(new Runnable() {
                         public void run() {
-                            if(bitmap!=null) {
-
-
+                            if (bitmap != null) {
 
 
                                 //float scale = (xScale <= yScale) ? xScale : yScale;
@@ -474,17 +463,18 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                                 textView.setText(urlName);
                                 //Toast.makeText(appContext, bitmap.getWidth()+"-"+bitmap.getHeight(), Toast.LENGTH_SHORT).show();
-                            } else{
-                                if (errorLoadBmp.length()==0)   textView.setText("error"); else
+                            } else {
+                                if (errorLoadBmp.length() == 0) textView.setText("error");
+                                else
                                     textView.setText(errorLoadBmp);
                             }
-                            try{
+                            try {
                                 imageButton.clearAnimation();
                                 imageButton.setEnabled(true);
                                 imageButton.setAlpha(1F);
                                 mImageView.setEnabled(true);
                                 mImageView.setAlpha(1F);
-                            }catch(Exception ea){
+                            } catch (Exception ea) {
                                 ea.printStackTrace();
                             }
 
@@ -493,62 +483,45 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 }
             }).start();
         }
-        private void setWall()
-        {
-            try{
+
+        private void setWall() {
+            textView = (TextView) rootView.findViewById(R.id.section_label);
+            textView.setText("set ...");
+            mImageView.setEnabled(false);
+            mImageView.setAlpha(0.5F);
+
+            new Thread(new Runnable() {
+                public void run() {
+
+                    mImageView.post(new Runnable() {
+                        public void run() {
+                            try {
+                                Bitmap bitMap = null;
+                                bitMap = mImageView.getDrawingCache();
+
+                                WallpaperManager wallpaperManager = WallpaperManager
+                                        .getInstance(appContext);
 
 
-                //mImageView.setDrawingCacheEnabled(true);
-                //mImageView.buildDrawingCache();
-                Bitmap bitMap = null;
-                bitMap = mImageView.getDrawingCache();
+                                wallpaperManager.clear();
+                                wallpaperManager.setBitmap(bitMap);
+
+                                textView.setText("set Wallpaper");
+                                mImageView.setEnabled(true);
+                                mImageView.setAlpha(1F);
+                            } catch (Exception e1) {
+                                textView.setText("error");
+                                Toast.makeText(appContext, e1.getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
 
 
-               /* int hh=bitmap.getHeight();
-                int ww=bitmap.getWidth();
-                double c=1;
-                int newH=1;
-                int newW=1;
-                if(hh<=ww)
-                {
-                    c=1920.0/hh;
-                    newH=1920;
-                    newW=(int)(ww*c);
-                }else
-                {
-                    c=1080.0/ww;
-                    newW=1080;
-                    newH=(int)(hh*c);
                 }
+            }).start();
 
-                Bitmap bitMap = Bitmap.createScaledBitmap(bitmap, newW, newH, false);*/
-
-                WallpaperManager wallpaperManager = WallpaperManager
-                        .getInstance(appContext);
-
-
-                wallpaperManager.clear();
-                wallpaperManager.setBitmap(bitMap);
-
-                /*mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                mImageView.setImageBitmap(bitmap2);
-                mImageView.setDrawingCacheEnabled(true);
-                mImageView.buildDrawingCache();
-
-
-                wallpaperManager.suggestDesiredDimensions(width, height);*/
-
-                //mImageView.setDrawingCacheEnabled(false);
-                textView.setText("set Wallpaper");
-
-            }catch(Exception e1){
-                //TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-                textView.setText("error");
-                Toast.makeText(appContext, e1.getMessage(), Toast.LENGTH_LONG).show();
-            }
 
         }
-
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -556,24 +529,22 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             rootView = inflater.inflate(R.layout.fragment_main, container, false);
             textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText("");
-            mImageView =(ImageView)rootView.findViewById(R.id.imgView);
+            mImageView = (ImageView) rootView.findViewById(R.id.imgView);
             imageButton = (ImageButton) rootView.findViewById(R.id.button);
             imageButtonBack = (ImageButton) rootView.findViewById(R.id.button_back);
             imageButtonResize = (ImageButton) rootView.findViewById(R.id.button_resize);
             imageButtonPlus = (ImageButton) rootView.findViewById(R.id.button_plus);
             imageButtonCheck = (ImageButton) rootView.findViewById(R.id.button_check);
 
-            textView.setOnClickListener(new View.OnClickListener()
-                                           {
-                                               public void onClick(View v)
-                                               {
-                                                   textView.setText("uploading ...");
-                                                   mBitmapToSave=mImageView.getDrawingCache();
-                                                   mDmImageView=mImageView;
-                                                   mDmTextView = textView;
-                                                   mGoogleApiClient.connect();
-                                               }
-                                           });
+            textView.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    textView.setText("uploading ...");
+                    mBitmapToSave = mImageView.getDrawingCache();
+                    mDmImageView = mImageView;
+                    mDmTextView = textView;
+                    mGoogleApiClient.connect();
+                }
+            });
 
             final GestureDetector gesture = new GestureDetector(getActivity(),
                     new GestureDetector.SimpleOnGestureListener() {
@@ -582,11 +553,13 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         public boolean onDown(MotionEvent e) {
                             return true;
                         }
-                        @Override
-                        public boolean onSingleTapUp(MotionEvent e){
 
-                            textView.setText("set ...");
+                        @Override
+                        public boolean onSingleTapUp(MotionEvent e) {
+
+
                             setWall();
+
                             return super.onSingleTapUp(e);
                         }
 
@@ -597,40 +570,38 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                             final int SWIPE_MIN_DISTANCE = 120;
                             try {
                                 //scrolX=0;scrolY=0;
-                                float ae1=e1.getY();
-                                float ae2=e2.getY();
-                                if(mImageView.getScaleType()!=ImageView.ScaleType.MATRIX) {
+                                float ae1 = e1.getY();
+                                float ae2 = e2.getY();
+                                if (mImageView.getScaleType() != ImageView.ScaleType.MATRIX) {
                                     if (e1.getY() - e2.getY() < SWIPE_MIN_DISTANCE * -1) {
-                                        Log.i("fling", "down");
+                                        //Log.i("fling", "down");
                                         //imageButton.callOnClick();
 
                                         loadDate();
                                     } else if (e1.getY() - e2.getY() > SWIPE_MIN_DISTANCE) {
-                                        Log.i("fling", "up");
+                                        //Log.i("fling", "up");
                                         //imageButton.callOnClick();
                                         loadDate();
                                     }
-                                }else
-                                {
+                                } else {
                                     //int scrollByX = (int)(e1.getX() - e2.getX());
                                     //int scrollByY = (int)(e1.getY() - e2.getY());
 
 
-                                        int mx = (int)e1.getX();
-                                    int my = (int)e1.getY();
+                                    int mx = (int) e1.getX();
+                                    int my = (int) e1.getY();
 
-                                    int curX = (int)e2.getX();
-                                    int curY = (int)e2.getY();
-                                    int xs=(mx - curX);
-                                    int ys= (my - curY);
+                                    int curX = (int) e2.getX();
+                                    int curY = (int) e2.getY();
+                                    int xs = (mx - curX);
+                                    int ys = (my - curY);
 
                                     //xs=100;ys=100;
-                                    mImageView.scrollBy((int)xs , (int)ys );
+                                    mImageView.scrollBy((int) xs, (int) ys);
 
 
-
-                                    scrolX=scrolX+xs;
-                                    scrolY=scrolY+ys;
+                                    scrolX = scrolX + xs;
+                                    scrolY = scrolY + ys;
                                     //Toast.makeText(appContext, scrolX+"-"+scrolY, Toast.LENGTH_SHORT).show();
 
                                 }
@@ -649,17 +620,13 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             });
 
 
-            imageButton.setOnClickListener(new View.OnClickListener()
-            {
-                public void onClick(View v)
-                {
+            imageButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
                     loadDate();
                 }
             });
-            imageButtonBack.setOnClickListener(new View.OnClickListener()
-            {
-                public void onClick(View v)
-                {
+            imageButtonBack.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
                     mImageView.setImageBitmap(mBitmapToBack);
                     mImageView.setDrawingCacheEnabled(true);
                     mImageView.buildDrawingCache();
@@ -669,77 +636,65 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 }
             });
 
-            imageButtonResize.setOnClickListener(new View.OnClickListener()
-            {
-                public void onClick(View v)
-                {
+            imageButtonResize.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
                     try {
-                    if(mImageView.getScaleType()==ImageView.ScaleType.FIT_CENTER) {
+                        if (mImageView.getScaleType() == ImageView.ScaleType.FIT_CENTER) {
                         /*mImageView.scrollBy(-1*scrolX,-1*scrolY);
                         scrolX=0;
                         scrolY=0;
                         mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                         scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
                         scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();*/
-                        int hh=bitmap.getHeight();
-                        int ww=bitmap.getWidth();
-                        double c=1;
-                        int newH=1;
-                        int newW=1;
-                        if(hh<=ww)
-                        {
-                            c=1920.0/hh;
-                            newH=1920;
-                            newW=(int)(ww*c);
-                        }else
-                        {
-                            c=1080.0/ww;
-                            newW=1080;
-                            newH=(int)(hh*c);
-                        }
+                            int hh = bitmap.getHeight();
+                            int ww = bitmap.getWidth();
+                            double c = 1;
+                            int newH = 1;
+                            int newW = 1;
+                            if (hh <= ww) {
+                                c = 1920.0 / hh;
+                                newH = 1920;
+                                newW = (int) (ww * c);
+                            } else {
+                                c = 1080.0 / ww;
+                                newW = 1080;
+                                newH = (int) (hh * c);
+                            }
 
-                        Bitmap bitmap2 = Bitmap.createScaledBitmap(bitmap, newW, newH, false);
+                            Bitmap bitmap2 = Bitmap.createScaledBitmap(bitmap, newW, newH, false);
 
-                        mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                        mImageView.setImageBitmap(bitmap2);
-                        mImageView.setDrawingCacheEnabled(true);
-                        mImageView.buildDrawingCache();
-                        textView.setText("CENTER_CROP");
+                            mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                            mImageView.setImageBitmap(bitmap2);
+                            mImageView.setDrawingCacheEnabled(true);
+                            mImageView.buildDrawingCache();
+                            textView.setText("CENTER_CROP");
 
 
-
-                    }
-                    else {
+                        } else {
                         /*mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
                         scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();*/
-                        mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        mImageView.setImageBitmap(bitmap);
-                        mImageView.setDrawingCacheEnabled(true);
-                        mImageView.buildDrawingCache();
+                            mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                            mImageView.setImageBitmap(bitmap);
+                            mImageView.setDrawingCacheEnabled(true);
+                            mImageView.buildDrawingCache();
 
 
-
-                        textView.setText("FIT_CENTER");
-                    }
-                    }catch(Exception e)
-                    {
+                            textView.setText("FIT_CENTER");
+                        }
+                    } catch (Exception e) {
 
                     }
-
-
 
 
                 }
             });
-            imageButtonPlus.setOnClickListener(new View.OnClickListener()
-            {
-                public void onClick(View v)
-                {
+            imageButtonPlus.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
                     try {
                         mImageView.setScaleType(ImageView.ScaleType.MATRIX);
-                    int nh = (int) ( bitmap.getHeight() * 1.5 );
-                    int nw = (int) ( bitmap.getWidth() * 1.5 );
+                        int nh = (int) (bitmap.getHeight() * 1.5);
+                        int nw = (int) (bitmap.getWidth() * 1.5);
                         bitmap = Bitmap.createScaledBitmap(bitmap, nw, nh, true);
                         mImageView.setImageBitmap(bitmap);
                         mImageView.setDrawingCacheEnabled(true);
@@ -747,31 +702,28 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         textView.setText("Plus");
                         //Toast.makeText(appContext, bitmap.getWidth()+"-"+bitmap.getHeight(), Toast.LENGTH_SHORT).show();
 
-                    }catch(Exception e)
-                    {
+                    } catch (Exception e) {
 
                     }
                 }
             });
 
-            imageButtonCheck.setOnClickListener(new View.OnClickListener()
-            {
-                public void onClick(View v)
-                {
+            imageButtonCheck.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
                     try {
                         //Toast.makeText(appContext, scrolX+"-"+scrolY, Toast.LENGTH_SHORT).show();
                         Bitmap original = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
                         android.graphics.Matrix matrix = new android.graphics.Matrix();
 
-                        Bitmap result = Bitmap.createBitmap(original, (int)(scrolX/scaleX), (int)(scrolY/scaleY), original.getWidth()-(int)(scrolX/scaleX), original.getHeight()-(int)(scrolY/scaleY), matrix, true);
+                        Bitmap result = Bitmap.createBitmap(original, (int) (scrolX / scaleX), (int) (scrolY / scaleY), original.getWidth() - (int) (scrolX / scaleX), original.getHeight() - (int) (scrolY / scaleY), matrix, true);
 
                         mImageView.setImageBitmap(result);
                         mImageView.setDrawingCacheEnabled(true);
                         mImageView.buildDrawingCache();
 
-                        mImageView.scrollBy(-1*scrolX,-1*scrolY);
-                        scrolX=0;
-                        scrolY=0;
+                        mImageView.scrollBy(-1 * scrolX, -1 * scrolY);
+                        scrolX = 0;
+                        scrolY = 0;
 
                        /* Bitmap result = Bitmap.createBitmap(mImageView.getWidth(), mImageView.getHeight(), Bitmap.Config.RGB_565);
 Canvas c = new Canvas(result);
@@ -779,48 +731,46 @@ Canvas c = new Canvas(result);
                         textView.setText("Check");
 
 
-                    }catch(Exception e)
-                    {
+                    } catch (Exception e) {
                         textView.setText("Error");
-                        mImageView.scrollBy(-1*scrolX,-1*scrolY);
-                        scrolX=0;
-                        scrolY=0;
+                        mImageView.scrollBy(-1 * scrolX, -1 * scrolY);
+                        scrolX = 0;
+                        scrolY = 0;
                     }
                 }
             });
 
 
-
-
-
             return rootView;
         }
-        public Bitmap loadImageFromGoogleDrive()
-        {
 
-            try{
+        public Bitmap loadImageFromGoogleDrive() {
+
+            try {
 
                 return mBitmapToSave;
 
-            }catch(Exception e)
-            {
+            } catch (Exception e) {
                 return null;
             }
 
         }
-        public Bitmap loadImageFromNetwork(int sn)
-        {
-            try{
+
+        public Bitmap loadImageFromNetwork(int sn) {
+            try {
 
                 StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 
                 StrictMode.setThreadPolicy(policy);
 
-                String urls="";
-                switch(sn)
-                {
-                    case 1:urls="http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";break;
-                    case 2:urls="http://lebalexwebapp.azurewebsites.net/lockscreen/rand500.aspx";break;
+                String urls = "";
+                switch (sn) {
+                    case 1:
+                        urls = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";
+                        break;
+                    case 2:
+                        urls = "http://lebalexwebapp.azurewebsites.net/lockscreen/rand500.aspx";
+                        break;
 
                 }
 
@@ -846,7 +796,7 @@ Canvas c = new Canvas(result);
                 try {
                     JSONArray jsonArray = new JSONArray(resultJson);
                     urlName = jsonArray.getString(0);
-                    urls=jsonArray.getString(1);
+                    urls = jsonArray.getString(1);
 
 
                 } catch (JSONException e) {
@@ -861,12 +811,11 @@ Canvas c = new Canvas(result);
 
                 InputStream imageStream = urlConnection.getInputStream();
 
-                Bitmap bmp =null;
+                Bitmap bmp = null;
 
                 bmp = BitmapFactory.decodeStream(imageStream);
                 return bmp;
-            }catch(Exception eee)
-            {
+            } catch (Exception eee) {
                 errorLoadBmp = eee.getMessage();
                 return null;
             }
