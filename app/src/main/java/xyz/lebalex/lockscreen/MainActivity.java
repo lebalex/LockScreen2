@@ -1,21 +1,37 @@
 package xyz.lebalex.lockscreen;
 
 
+
+
+
 import android.app.WallpaperManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+
 import android.graphics.Matrix;
-import android.graphics.drawable.BitmapDrawable;
+import android.graphics.Paint;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+
 import android.support.v4.app.Fragment;
+
+
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+
+
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
@@ -29,6 +45,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.RotateAnimation;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -58,6 +75,8 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -90,13 +109,15 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     private static final String TAG = "lockscreen";
     private static String urlName = "";
     private static Bitmap mBitmapToSave;
-    //private static ImageButton mDimageButton;
     private static ImageView mDmImageView;
     private static TextView mDmTextView;
+    private static String originalUrl;
 
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 1;
     private static final int REQUEST_CODE_CREATOR = 2;
     private static final int REQUEST_CODE_RESOLUTION = 3;
+
+    private static final int REQUEST_WRITE_STORAGE = 112;
 
     private static GoogleApiClient mGoogleApiClient;
 
@@ -109,57 +130,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
                 .setResultCallback(driveContentsCallback);
-
-        /*Drive.DriveApi.newDriveContents(mGoogleApiClient)
-                .setResultCallback(new ResultCallback<DriveContentsResult>() {
-
-                    @Override
-                    public void onResult(DriveContentsResult result) {
-                        // If the operation was not successful, we cannot do anything
-                        // and must
-                        // fail.
-                        if (!result.getStatus().isSuccess()) {
-                            Log.i(TAG, "Failed to create new contents.");
-                            return;
-                        }
-                        // Otherwise, we can write our data to the new contents.
-                        Log.i(TAG, "New contents created.");
-                        // Get an output stream for the contents.
-                        OutputStream outputStream = result.getDriveContents().getOutputStream();
-                        // Write the bitmap data from it.
-                        ByteArrayOutputStream bitmapStream = new ByteArrayOutputStream();
-                        image.compress(Bitmap.CompressFormat.PNG, 100, bitmapStream);
-                        try {
-                            outputStream.write(bitmapStream.toByteArray());
-                        } catch (IOException e1) {
-                            Log.i(TAG, "Unable to write file contents.");
-                        }
-                        // Create the initial metadata - MIME type and title.
-                        // Note that the user will be able to change the title later.
-
-
-                        java.util.Calendar c = java.util.Calendar.getInstance();
-                        MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                                .setMimeType("image/jpeg").setTitle("image"+c.get(java.util.Calendar.YEAR)+c.get(java.util.Calendar.MONTH)+c.get(java.util.Calendar.DATE)+c.get(java.util.Calendar.HOUR_OF_DAY)+c.get(java.util.Calendar.MINUTE)+c.get(java.util.Calendar.SECOND)+".png").build();
-                        // Create an intent for the file chooser, and start it.
-                        // Create a file in the root folder
-
-                        IntentSender intentSender = Drive.DriveApi
-                                .newCreateFileActivityBuilder()
-                                .setInitialMetadata(metadataChangeSet)
-                                .setInitialDriveContents(result.getDriveContents())
-                                .build(mGoogleApiClient);
-                        try {
-                            startIntentSenderForResult(
-                                    intentSender, REQUEST_CODE_CREATOR, null, 0, 0, 0);
-                            mDmImageView.setEnabled(true);
-                            mDmImageView.setAlpha(1F);
-                        } catch (Exception e) {
-                            Log.i(TAG, "Failed to launch file chooser.");
-                        }
-                    }
-                });*/
-
     }
 
     final private ResultCallback<DriveContentsResult> driveContentsCallback = new
@@ -347,9 +317,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+
             return true;
         }
-
+        if (id == R.id.action_reload) {
+                PlaceholderFragment frag = (PlaceholderFragment)mViewPager.getAdapter().instantiateItem(mViewPager, mViewPager.getCurrentItem());
+                frag.reloadImage();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -374,9 +349,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         Handler handler = new Handler();
         Bitmap mBitmapToBack;
         Bitmap bitmap;
-        private int scrolX, scrolY;
         private android.graphics.Matrix matrix;
-        private float scaleX, scaleY;
+        //private float scaleX, scaleY;
 
 
         public PlaceholderFragment() {
@@ -394,8 +368,19 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             return fragment;
         }
 
+        private void setImageToView(Bitmap bitmap) {
+            mImageView.invalidate();
+            mImageView.setScrollX(0);
+            mImageView.setScrollY(0);
+            mImageView.setDrawingCacheEnabled(false);
+            mImageView.setImageBitmap(bitmap);
+            mImageView.setDrawingCacheEnabled(true);
+            mImageView.buildDrawingCache();
+        }
+
 
         private void loadDate() {
+
             imageButton = (ImageButton) rootView.findViewById(R.id.button);
             textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText("loading ...");
@@ -430,22 +415,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                 //float scale = (xScale <= yScale) ? xScale : yScale;
 
                                 android.graphics.Matrix matrix = new android.graphics.Matrix();
-
-
                                 mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                                mImageView.setImageBitmap(bitmap);
-                                mImageView.setDrawingCacheEnabled(true);
-                                mImageView.buildDrawingCache();
-                                //textView.setText("complte");
-                                /*int w1 = mImageView.getWidth();
-                                int w2 = bitmap.getWidth();
-                                scaleX = mImageView.getWidth()/bitmap.getWidth();
-                                scaleY = mImageView.getHeight()/bitmap.getHeight();*/
-                                scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
-                                scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();
+                                setImageToView(bitmap);
 
                                 //Log.i("Width", ""+bitmap.getWidth());
-                                //Log.i("Height", ""+mImageView.getHeight());
+                                //Log.i("Height", ""+bitmap.getHeight());
 
                                 textView.setText(urlName);
                                 //Toast.makeText(appContext, bitmap.getWidth()+"-"+bitmap.getHeight(), Toast.LENGTH_SHORT).show();
@@ -483,7 +457,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         public void run() {
                             try {
                                 Bitmap bitMap = null;
-                                bitMap = mImageView.getDrawingCache();
+                                bitMap = mImageView.getDrawingCache(true);
 
                                 WallpaperManager wallpaperManager = WallpaperManager
                                         .getInstance(appContext);
@@ -509,6 +483,96 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         }
 
+        private Bitmap imageForScreen(Bitmap bitmap) {
+            int hh = bitmap.getHeight();
+            int ww = bitmap.getWidth();
+            double c = 1;
+            int newH = 1;
+            int newW = 1;
+            if (hh <= ww) {
+                c = 1920.0 / hh;
+                newH = 1920;
+                newW = (int) (ww * c);
+            } else {
+                c = 1080.0 / ww;
+                newW = 1080;
+                newH = (int) (hh * c);
+            }
+
+            Bitmap bitmap2 = Bitmap.createScaledBitmap(bitmap, newW, newH, false);
+            return bitmap2;
+        }
+        private void reloadImage()
+        {
+            mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            textView.setText("loading ...");
+            RotateAnimation rotateAnimation = new RotateAnimation(0f, 360 * 10, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f);
+
+            rotateAnimation.setStartOffset(1);
+            rotateAnimation.setRepeatCount(-1);
+            rotateAnimation.setInterpolator(new AccelerateInterpolator());
+            rotateAnimation.setDuration(10000);
+            imageButton.startAnimation(rotateAnimation);
+            imageButton.setEnabled(false);
+            imageButton.setAlpha(0.7F);
+            mImageView.setEnabled(false);
+            mImageView.setAlpha(0.5F);
+            new Thread(new Runnable() {
+                public void run() {
+                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                    StrictMode.setThreadPolicy(policy);
+                    bitmap = getBitMapFromUrl(originalUrl);
+                    handler.post(new Runnable() {
+                        public void run() {
+                            setImageToView(bitmap);
+                            imageButton.clearAnimation();
+                            imageButton.setEnabled(true);
+                            imageButton.setAlpha(1F);
+                            mImageView.setEnabled(true);
+                            mImageView.setAlpha(1F);
+                            textView.setText("complite");
+                        }
+                    });
+                }
+            }).start();
+        }
+
+        protected void makeRequest() {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_WRITE_STORAGE);
+        }
+
+        private void checkPermision()
+        {
+            int permission = ContextCompat.checkSelfPermission(appContext,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+            if (permission != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, "Permission to record denied");
+
+                if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(appContext);
+                    builder.setMessage("Permission to access the SD-CARD is required for this app to Download PDF.")
+                            .setTitle("Permission required");
+
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                        public void onClick(DialogInterface dialog, int id) {
+                            Log.i(TAG, "Clicked");
+                            makeRequest();
+                        }
+                    });
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+
+                } else {
+                    makeRequest();
+                }
+            }
+        }
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
@@ -522,13 +586,56 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             imageButtonPlus = (ImageButton) rootView.findViewById(R.id.button_plus);
             imageButtonCheck = (ImageButton) rootView.findViewById(R.id.button_check);
 
+
+
             textView.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     textView.setText("uploading ...");
+                    mImageView.setEnabled(false);
+                    mImageView.setAlpha(0.5F);
+
+                    checkPermision();
+
                     mBitmapToSave = mImageView.getDrawingCache();
-                    mDmImageView = mImageView;
+                    /*mDmImageView = mImageView;
                     mDmTextView = textView;
-                    mGoogleApiClient.connect();
+                    mGoogleApiClient.connect();*/
+
+                    new Thread(new Runnable() {
+                        public void run() {
+
+                            handler.post(new Runnable() {
+                                public void run() {
+
+                                    try {
+                                        String file_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/LockScreen";
+                                        //String file_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/LockScreen";
+                                        File dir = new File(file_path);
+                                        if (!dir.exists())
+                                            dir.mkdirs();
+                                        java.util.Calendar c = java.util.Calendar.getInstance();
+                                        //String fileName = "image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png";
+                                        String fileName = "image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".jpg";
+
+                                        File file = new File(dir, fileName);
+                                        FileOutputStream fOut = new FileOutputStream(file);
+                                        //mBitmapToSave.compress(Bitmap.CompressFormat.PNG, 85, fOut);
+                                        mBitmapToSave.compress(Bitmap.CompressFormat.JPEG, 85, fOut);
+                                        fOut.flush();
+                                        fOut.close();
+                                        textView.setText("complite");
+                                        mImageView.setEnabled(true);
+                                        mImageView.setAlpha(1F);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                        textView.setText(e.getMessage());
+                                    }
+                                }
+                            });
+
+
+                        }
+                    }).start();
                 }
             });
 
@@ -543,8 +650,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         @Override
                         public boolean onSingleTapUp(MotionEvent e) {
 
-
-                            setWall();
+                            if (mImageView.getScaleType() != ImageView.ScaleType.MATRIX)
+                                setWall();
 
                             return super.onSingleTapUp(e);
                         }
@@ -570,10 +677,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                         loadDate();
                                     }
                                 } else {
-                                    //int scrollByX = (int)(e1.getX() - e2.getX());
-                                    //int scrollByY = (int)(e1.getY() - e2.getY());
-
-
                                     int mx = (int) e1.getX();
                                     int my = (int) e1.getY();
 
@@ -582,13 +685,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                     int xs = (mx - curX);
                                     int ys = (my - curY);
 
-                                    //xs=100;ys=100;
                                     mImageView.scrollBy((int) xs, (int) ys);
 
-
-                                    scrolX = scrolX + xs;
-                                    scrolY = scrolY + ys;
-                                    //Toast.makeText(appContext, scrolX+"-"+scrolY, Toast.LENGTH_SHORT).show();
 
                                 }
                             } catch (Exception e) {
@@ -613,12 +711,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             });
             imageButtonBack.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    mImageView.setImageBitmap(mBitmapToBack);
-                    mImageView.setDrawingCacheEnabled(true);
-                    mImageView.buildDrawingCache();
+                    mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    setImageToView(mBitmapToBack);
                     bitmap = mBitmapToBack;
-                    scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
-                    scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();
                 }
             });
 
@@ -626,65 +721,29 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 public void onClick(View v) {
                     try {
                         if (mImageView.getScaleType() == ImageView.ScaleType.FIT_CENTER) {
-                        /*mImageView.scrollBy(-1*scrolX,-1*scrolY);
-                        scrolX=0;
-                        scrolY=0;
-                        mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                        scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
-                        scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();*/
-                            int hh = bitmap.getHeight();
-                            int ww = bitmap.getWidth();
-                            double c = 1;
-                            int newH = 1;
-                            int newW = 1;
-                            if (hh <= ww) {
-                                c = 1920.0 / hh;
-                                newH = 1920;
-                                newW = (int) (ww * c);
-                            } else {
-                                c = 1080.0 / ww;
-                                newW = 1080;
-                                newH = (int) (hh * c);
-                            }
-
-                            Bitmap bitmap2 = Bitmap.createScaledBitmap(bitmap, newW, newH, false);
-
                             mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                            mImageView.setImageBitmap(bitmap2);
-                            mImageView.setDrawingCacheEnabled(true);
-                            mImageView.buildDrawingCache();
+                            setImageToView(imageForScreen(bitmap));
                             textView.setText("CENTER_CROP");
-
-
                         } else {
-                        /*mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        scaleX = (float) mImageView.getWidth() / (float) bitmap.getWidth();
-                        scaleY = (float) mImageView.getHeight() / (float) bitmap.getHeight();*/
                             mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                            mImageView.setImageBitmap(bitmap);
-                            mImageView.setDrawingCacheEnabled(true);
-                            mImageView.buildDrawingCache();
-
-
+                            setImageToView(bitmap);
                             textView.setText("FIT_CENTER");
                         }
                     } catch (Exception e) {
-
                     }
-
-
                 }
             });
             imageButtonPlus.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     try {
                         mImageView.setScaleType(ImageView.ScaleType.MATRIX);
+
+                        mImageView.setScrollX(0);
+                        mImageView.setScrollY(0);
                         int nh = (int) (bitmap.getHeight() * 1.5);
                         int nw = (int) (bitmap.getWidth() * 1.5);
                         bitmap = Bitmap.createScaledBitmap(bitmap, nw, nh, true);
-                        mImageView.setImageBitmap(bitmap);
-                        mImageView.setDrawingCacheEnabled(true);
-                        mImageView.buildDrawingCache();
+                        setImageToView(bitmap);
                         textView.setText("Plus");
                         //Toast.makeText(appContext, bitmap.getWidth()+"-"+bitmap.getHeight(), Toast.LENGTH_SHORT).show();
 
@@ -698,35 +757,44 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 public void onClick(View v) {
                     try {
                         //Toast.makeText(appContext, scrolX+"-"+scrolY, Toast.LENGTH_SHORT).show();
-                        Bitmap drawable = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
-                        int w = drawable.getWidth();
-                        int h = drawable.getHeight();
-                        Matrix m =  new Matrix();
-                        Bitmap result = Bitmap.createBitmap(drawable, scrolX, scrolY, w-scrolX, h-scrolY, m, false);
-                        //final Drawable drawable = getDrawable();
+                        Bitmap drawable = mImageView.getDrawingCache(true);
 
+                        //Bitmap bmOverlay = Bitmap.createBitmap(drawable.getWidth(), drawable.getHeight(), drawable.getConfig());
 
-                        mImageView.setImageBitmap(result);
-                        mImageView.setDrawingCacheEnabled(true);
-                        mImageView.buildDrawingCache();
+                        bitmap = null;
+                        bitmap = Bitmap.createBitmap(drawable.getWidth(), drawable.getHeight(), drawable.getConfig());
+                        Canvas canvas = new Canvas(bitmap);
+                        Paint paint = new Paint();
+                        //paint.setColor(Color.RED);
+                        //paint.setStrokeWidth(10);
+                        canvas.drawBitmap(drawable, new Matrix(), null);
+                        //canvas.drawCircle(mImageView.getScrollX(), mImageView.getScrollY(), 50, paint);
 
-                        mImageView.scrollBy(-1 * scrolX, -1 * scrolY);
+                        //Bitmap bmOverlay2 = Bitmap.createBitmap(bmOverlay, mImageView.getScrollX(), mImageView.getScrollY(), ww, hh, m, false);
 
+                        setImageToView(bitmap);
 
-                        scrolX = 0;
-                        scrolY = 0;
+                        mImageView.setScrollX(0);
+                        mImageView.setScrollY(0);
+
+                        //mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        //scrolX = 0;
+                        //scrolY = 0;
 
                        /* Bitmap result = Bitmap.createBitmap(mImageView.getWidth(), mImageView.getHeight(), Bitmap.Config.RGB_565);
-Canvas c = new Canvas(result);
+                            Canvas c = new Canvas(result);
                         mImageView.draw(c);*/
                         textView.setText("Check");
 
 
                     } catch (Exception e) {
-                        textView.setText("Error");
-                        mImageView.scrollBy(-1 * scrolX, -1 * scrolY);
-                        scrolX = 0;
-                        scrolY = 0;
+                        textView.setText(e.getMessage());
+                        Toast.makeText(appContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        mImageView.setScrollX(0);
+                        mImageView.setScrollY(0);
+                        //scrolX = 0;
+                        //scrolY = 0;
                     }
                 }
             });
@@ -768,6 +836,8 @@ Canvas c = new Canvas(result);
                 URL url = new URL(urls);
 
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setConnectTimeout(10000);
+                urlConnection.setReadTimeout(10000);
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
 
@@ -795,7 +865,7 @@ Canvas c = new Canvas(result);
                 }
 
 
-                url = new URL(urls);
+                /*url = new URL(urls);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
@@ -805,13 +875,33 @@ Canvas c = new Canvas(result);
                 Bitmap bmp = null;
 
                 bmp = BitmapFactory.decodeStream(imageStream);
-                return bmp;
+                return bmp;*/
+
+                return getBitMapFromUrl(urls);
             } catch (Exception eee) {
                 errorLoadBmp = eee.getMessage();
                 return null;
             }
         }
 
+    }
+
+    private static Bitmap getBitMapFromUrl(String urls)
+    {
+        try {
+            originalUrl = urls;
+            URL url = new URL(urls);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setConnectTimeout(10000);
+            urlConnection.setReadTimeout(10000);
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
+            InputStream imageStream = urlConnection.getInputStream();
+            return BitmapFactory.decodeStream(imageStream);
+        }catch(Exception e)
+        {
+            return null;
+        }
     }
 
 

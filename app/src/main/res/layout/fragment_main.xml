@@ -7,8 +7,10 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:id="@+id/frr"
     tools:context="xyz.lebalex.lockscreen.MainActivity$PlaceholderFragment"
     android:background="@android:color/background_dark">
+>
     <GridLayout
         android:rowCount="2"
         android:columnCount="2"
@@ -97,8 +99,6 @@
             android:adjustViewBounds="false"
             android:cropToPadding="false"
             android:layout_marginBottom="50dp" />
-
     </GridLayout>
-
 
 </RelativeLayout>
