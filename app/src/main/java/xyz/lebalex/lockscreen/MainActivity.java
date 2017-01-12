@@ -8,6 +8,8 @@ import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -19,6 +21,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 
@@ -45,7 +48,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.RotateAnimation;
-import android.widget.Button;
+
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -83,6 +86,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity implements ConnectionCallbacks,
@@ -111,7 +116,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     private static Bitmap mBitmapToSave;
     private static ImageView mDmImageView;
     private static TextView mDmTextView;
-    private static String originalUrl;
+    private static String originalUrlTemp;
+    private static List<String> historyUrl=new ArrayList<String>();
+    private static int indexUrl=0;
 
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 1;
     private static final int REQUEST_CODE_CREATOR = 2;
@@ -121,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     private static GoogleApiClient mGoogleApiClient;
 
-    private void saveFileToDrive() {
+    public void saveFileToDrive() {
         // Start by creating a new contents, and setting a callback.
         Log.i(TAG, "Creating new contents.");
         final Bitmap image = mBitmapToSave;
@@ -159,41 +166,50 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     final String folderName = "LockScreen";
 
 
-                    Query query = new Query.Builder().addFilter(Filters.and(
-                            Filters.eq(SearchableField.TITLE, folderName),
-                            Filters.eq(SearchableField.TRASHED, false))).build();
-                    Drive.DriveApi.query(mGoogleApiClient, query).setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
-                                                                                        @Override
-                                                                                        public void onResult(DriveApi.MetadataBufferResult result) {
-                                                                                            if (!result.getStatus().isSuccess()) {
-                                                                                                //showMessage("Problem while retrieving files");
-                                                                                                return;
-                                                                                            }
-                                                                                            MetadataBuffer aaa = result.getMetadataBuffer();
-                                                                                            if (aaa.getCount() == 0) {
-                                                                                                //create folder
-                                                                                                MetadataChangeSet changeSet2 = new MetadataChangeSet.Builder()
-                                                                                                        .setTitle(folderName).build();
-                                                                                                Drive.DriveApi.getRootFolder(mGoogleApiClient).createFolder(mGoogleApiClient
-                                                                                                        , changeSet2).setResultCallback(folderCreatedCallback);
-                                                                                                mDmTextView.setText("create folder, try again");
-                                                                                            } else {
 
-                                                                                                DriveId sFolderId = aaa.get(0).getDriveId();
-                                                                                                DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
-                                                                                                java.util.Calendar c = java.util.Calendar.getInstance();
-                                                                                                MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                                                                                                        .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
+try {
+    Log.i(TAG, "Query.Builder");
+    Query query = new Query.Builder().addFilter(Filters.and(
+            Filters.eq(SearchableField.TITLE, folderName),
+            Filters.eq(SearchableField.TRASHED, false))).build();
+    Drive.DriveApi.query(mGoogleApiClient, query).setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
+                                                                        @Override
+                                                                        public void onResult(DriveApi.MetadataBufferResult result) {
+                                                                            if (!result.getStatus().isSuccess()) {
+                                                                                //showMessage("Problem while retrieving files");
+                                                                                //Toast.makeText(appContext, "Problem while retrieving files", Toast.LENGTH_SHORT).show();
+                                                                                return;
+                                                                            }
+                                                                            MetadataBuffer aaa = result.getMetadataBuffer();
+                                                                            if (aaa.getCount() == 0) {
+                                                                                //create folder
+                                                                                MetadataChangeSet changeSet2 = new MetadataChangeSet.Builder()
+                                                                                        .setTitle(folderName).build();
+                                                                                Drive.DriveApi.getRootFolder(mGoogleApiClient).createFolder(mGoogleApiClient
+                                                                                        , changeSet2).setResultCallback(folderCreatedCallback);
+                                                                                mDmTextView.setText("create folder, try again");
 
-                                                                                                folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
-                                                                                                        .setResultCallback(fileCallback);
-                                                                                                mDmTextView.setText("complite upload");
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                    );
+                                                                            } else {
 
+                                                                                DriveId sFolderId = aaa.get(0).getDriveId();
+                                                                                DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
+                                                                                java.util.Calendar c = java.util.Calendar.getInstance();
+                                                                                MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
+                                                                                        .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
 
+                                                                                folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
+                                                                                        .setResultCallback(fileCallback);
+                                                                                mDmTextView.setText("complite upload");
+
+                                                                            }
+                                                                        }
+                                                                    }
+    );
+
+}catch(Exception edr)
+{
+    Toast.makeText(appContext, edr.getMessage(), Toast.LENGTH_SHORT).show();
+}
 
                     /*DriveId sFolderId = DriveId.decodeFromString("DriveId:CAESABjuASDiw_nO5VUoAQ==");
                     DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
@@ -251,8 +267,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         Log.i(TAG, "GoogleApiClient connection suspended");
     }
 
-    @Override
 
+    @Override
     public void onConnectionFailed(ConnectionResult result) {
         // Called whenever the API client fails to connect.
         Log.i(TAG, "GoogleApiClient connection failed: " + result.toString());
@@ -261,10 +277,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             GoogleApiAvailability.getInstance().getErrorDialog(this, result.getErrorCode(), 0).show();
             return;
         }
-        // The failure has a resolution. Resolve it.
-        // Called typically when the app is not yet authorized, and an
-        // authorization
-        // dialog is displayed to the user.
         try {
             result.startResolutionForResult(this, REQUEST_CODE_RESOLUTION);
         } catch (Exception e) {
@@ -317,12 +329,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-
+            //SettingsActivity.actionTo(this);
+            Intent i = new Intent(this, SettingsActivity.class);
+            startActivity(i);
             return true;
         }
         if (id == R.id.action_reload) {
                 PlaceholderFragment frag = (PlaceholderFragment)mViewPager.getAdapter().instantiateItem(mViewPager, mViewPager.getCurrentItem());
-                frag.reloadImage();
+                frag.reloadImage(historyUrl.get(indexUrl-1));
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -422,6 +436,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                 //Log.i("Height", ""+bitmap.getHeight());
 
                                 textView.setText(urlName);
+                                historyUrl.add(originalUrlTemp);
+                                indexUrl=historyUrl.size();
                                 //Toast.makeText(appContext, bitmap.getWidth()+"-"+bitmap.getHeight(), Toast.LENGTH_SHORT).show();
                             } else {
                                 if (errorLoadBmp.length() == 0) textView.setText("error");
@@ -502,8 +518,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             Bitmap bitmap2 = Bitmap.createScaledBitmap(bitmap, newW, newH, false);
             return bitmap2;
         }
-        private void reloadImage()
+        private void reloadImage(String originalUrl)
         {
+            originalUrlTemp=originalUrl;
             mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             textView.setText("loading ...");
             RotateAnimation rotateAnimation = new RotateAnimation(0f, 360 * 10, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f);
@@ -521,7 +538,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 public void run() {
                     StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
                     StrictMode.setThreadPolicy(policy);
-                    bitmap = getBitMapFromUrl(originalUrl);
+                    bitmap = getBitMapFromUrl(originalUrlTemp);
                     handler.post(new Runnable() {
                         public void run() {
                             setImageToView(bitmap);
@@ -587,55 +604,60 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             imageButtonCheck = (ImageButton) rootView.findViewById(R.id.button_check);
 
 
-
             textView.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     textView.setText("uploading ...");
                     mImageView.setEnabled(false);
                     mImageView.setAlpha(0.5F);
 
-                    checkPermision();
-
                     mBitmapToSave = mImageView.getDrawingCache();
-                    /*mDmImageView = mImageView;
-                    mDmTextView = textView;
-                    mGoogleApiClient.connect();*/
 
-                    new Thread(new Runnable() {
-                        public void run() {
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(appContext);
+                    if(sp.getBoolean("save_google_switch", false)) {
+                        mDmImageView = mImageView;
+                        mDmTextView = textView;
+                        if(mGoogleApiClient.isConnected())
+                            mGoogleApiClient.disconnect();
 
-                            handler.post(new Runnable() {
-                                public void run() {
+                        mGoogleApiClient.connect();
 
-                                    try {
-                                        String file_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/LockScreen";
-                                        //String file_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/LockScreen";
-                                        File dir = new File(file_path);
-                                        if (!dir.exists())
-                                            dir.mkdirs();
-                                        java.util.Calendar c = java.util.Calendar.getInstance();
-                                        //String fileName = "image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png";
-                                        String fileName = "image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".jpg";
+                    }else {
 
-                                        File file = new File(dir, fileName);
-                                        FileOutputStream fOut = new FileOutputStream(file);
-                                        //mBitmapToSave.compress(Bitmap.CompressFormat.PNG, 85, fOut);
-                                        mBitmapToSave.compress(Bitmap.CompressFormat.JPEG, 85, fOut);
-                                        fOut.flush();
-                                        fOut.close();
-                                        textView.setText("complite");
-                                        mImageView.setEnabled(true);
-                                        mImageView.setAlpha(1F);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                        textView.setText(e.getMessage());
+                        checkPermision();
+
+
+                        new Thread(new Runnable() {
+                            public void run() {
+
+                                handler.post(new Runnable() {
+                                    public void run() {
+
+                                        try {
+                                            String file_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/LockScreen";
+                                            File dir = new File(file_path);
+                                            if (!dir.exists())
+                                                dir.mkdirs();
+                                            java.util.Calendar c = java.util.Calendar.getInstance();
+                                            String fileName = "image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".jpg";
+                                            File file = new File(dir, fileName);
+                                            FileOutputStream fOut = new FileOutputStream(file);
+                                            mBitmapToSave.compress(Bitmap.CompressFormat.JPEG, 85, fOut);
+                                            fOut.flush();
+                                            fOut.close();
+                                            textView.setText("complite");
+                                            mImageView.setEnabled(true);
+                                            mImageView.setAlpha(1F);
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                            textView.setText(e.getMessage());
+                                        }
                                     }
-                                }
-                            });
+                                });
 
 
-                        }
-                    }).start();
+                            }
+                        }).start();
+                    }
                 }
             });
 
@@ -711,9 +733,13 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             });
             imageButtonBack.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    setImageToView(mBitmapToBack);
-                    bitmap = mBitmapToBack;
+                    //mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    //setImageToView(mBitmapToBack);
+                    //bitmap = mBitmapToBack;
+                    indexUrl--;
+                    if (indexUrl>0)
+                        reloadImage(historyUrl.get(indexUrl-1));
+
                 }
             });
 
@@ -836,8 +862,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 URL url = new URL(urls);
 
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setConnectTimeout(10000);
-                urlConnection.setReadTimeout(10000);
+                //urlConnection.setConnectTimeout(10000);
+                //urlConnection.setReadTimeout(10000);
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
 
@@ -889,7 +915,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     private static Bitmap getBitMapFromUrl(String urls)
     {
         try {
-            originalUrl = urls;
+            originalUrlTemp = urls;
             URL url = new URL(urls);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setConnectTimeout(10000);
@@ -904,6 +930,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         }
     }
 
+    public void finish() {
+        if(mGoogleApiClient.isConnected())
+            mGoogleApiClient.disconnect();
+        super.finish();
+    }
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
