@@ -5,18 +5,41 @@
         android:key="save_google_switch"
         android:summary="@string/pref_description_social_recommendations"
         android:title="@string/pref_title_social_recommendations" />
+    <!--SwitchPreference
+        android:defaultValue="false"
+        android:key="image_from_inet"
+        android:summary="@string/pref_description_image_from_inet"
+        android:title="@string/pref_title_image_from_inet" /-->
+
+    <ListPreference
+        android:defaultValue="1"
+        android:entries="@array/pref_source_titles"
+        android:entryValues="@array/pref_source_values"
+        android:key="source_load"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_source" />
+
+    <ListPreference
+        android:defaultValue="180"
+        android:entries="@array/pref_sync_frequency_titles"
+        android:entryValues="@array/pref_sync_frequency_values"
+        android:key="update_frequency"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_update_frequency" />
 
     <!-- NOTE: EditTextPreference accepts EditText attributes. -->
     <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
-    <!--EditTextPreference
+    <EditTextPreference
         android:capitalize="words"
-        android:defaultValue="@string/pref_default_display_name"
-        android:inputType="textCapWords"
-        android:key="example_text"
+        android:defaultValue="@string/pref_default_update_start"
+        android:inputType="numberSigned"
+        android:key="update_start"
         android:maxLines="1"
         android:selectAllOnFocus="true"
         android:singleLine="true"
-        android:title="@string/pref_title_display_name" /-->
+        android:title="@string/pref_title_update_start" />
 
     <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
          dismiss it. -->
