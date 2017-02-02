@@ -85,7 +85,13 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
                     {
                         WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
                         wallpaperManager.clear();
-                        wallpaperManager.setBitmap(bmp);
+                        //wallpaperManager.setBitmap(bmp);
+                        if (sp.getBoolean("flag_wall", true)) {
+                            wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_SYSTEM);
+                            wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);
+                        }
+                        else
+                            wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);
                     }
                 }
 
@@ -334,7 +340,16 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
                                     .getInstance(context);
                             wallpaperManager.clear();
 
-                            wallpaperManager.setBitmap(imageForScreen(bitmap));
+                            //wallpaperManager.setBitmap(imageForScreen(bitmap));
+                            //wallpaperManager.setBitmap(imageForScreen(bitmap), null, true, WallpaperManager.FLAG_LOCK);
+                            bitmap=imageForScreen(bitmap);
+                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                            if (sp.getBoolean("flag_wall", true)) {
+                                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_SYSTEM);
+                                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);
+                            }
+                            else
+                                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);
                             //Log.i("MyServiceGoole", "Set");
                         }
 

@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.SET_WALLPAPER_HINTS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <permission
         android:name="com.example.permission.C2D_MESSAGE"
@@ -35,7 +36,13 @@
             android:label="@string/title_activity_settings" />
 
         <service android:name="MyService"></service>
-        <receiver android:name="MyStartServiceReceiver"></receiver>
+        <receiver android:name="xyz.lebalex.lockscreen.MyStartServiceReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.HOME" />
+            </intent-filter>
+
+        </receiver>
 
     </application>
 

@@ -169,7 +169,8 @@ try {
             .getInstance(con);
     wallpaperManager.clear();
 
-    wallpaperManager.setBitmap(imageForScreen(bitmap));
+    //wallpaperManager.setBitmap(imageForScreen(bitmap));
+    wallpaperManager.setBitmap(imageForScreen(bitmap), null, true, WallpaperManager.FLAG_LOCK);
     Log.i("MyServiceGoole", "Set");
 
 }catch(Exception e)

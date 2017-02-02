@@ -214,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                                                                                     DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
                                                                                                     java.util.Calendar c = java.util.Calendar.getInstance();
                                                                                                     MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                                                                                                            .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
+                                                                                                            .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + (c.get(java.util.Calendar.MONTH)+1) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
 
                                                                                                     folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
                                                                                                             .setResultCallback(fileCallback);
@@ -228,17 +228,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     } catch (Exception edr) {
                         Toast.makeText(appContext, edr.getMessage(), Toast.LENGTH_SHORT).show();
                     }
-
-                    /*DriveId sFolderId = DriveId.decodeFromString("DriveId:CAESABjuASDiw_nO5VUoAQ==");
-                    DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
-
-                    java.util.Calendar c = java.util.Calendar.getInstance();
-                    MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                            .setMimeType("image/jpeg").setTitle("image"+c.get(java.util.Calendar.YEAR)+c.get(java.util.Calendar.MONTH)+c.get(java.util.Calendar.DATE)+c.get(java.util.Calendar.HOUR_OF_DAY)+c.get(java.util.Calendar.MINUTE)+c.get(java.util.Calendar.SECOND)+".png").build();
-
-                    folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
-                            .setResultCallback(fileCallback);*/
-
 
                     mDmImageView.setEnabled(true);
                     mDmImageView.setAlpha(1F);
@@ -513,6 +502,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         private AlarmManager manager;
 
         private int indd = 0;
+        private SharedPreferences sp;
 
         public PlaceholderFragment() {
         }
@@ -634,7 +624,13 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
 
                                 wallpaperManager.clear();
-                                wallpaperManager.setBitmap(bitMap);
+
+                                if (sp.getBoolean("flag_wall", true)) {
+                                    wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_SYSTEM);
+                                    wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
+                                }
+                                else
+                                    wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
 
                                 textView.setText("set Wallpaper");
                                 mImageView.setEnabled(true);
@@ -767,7 +763,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             imageButtonPlus = (ImageButton) rootView.findViewById(R.id.button_plus);
             imageButtonCheck = (ImageButton) rootView.findViewById(R.id.button_check);
 
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
             int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
             if (interval > 0)
                 startBackgroundService(interval);
@@ -781,7 +777,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                     mBitmapToSave = mImageView.getDrawingCache();
 
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(appContext);
+                    //SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(appContext);
                     if (sp.getBoolean("save_google_switch", false)) {
                         mDmImageView = mImageView;
                         mDmTextView = textView;
@@ -808,7 +804,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                             if (!dir.exists())
                                                 dir.mkdirs();
                                             java.util.Calendar c = java.util.Calendar.getInstance();
-                                            String fileName = "image" + c.get(java.util.Calendar.YEAR) + c.get(java.util.Calendar.MONTH) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".jpg";
+                                            String fileName = "image" + c.get(java.util.Calendar.YEAR) + (c.get(java.util.Calendar.MONTH)+1) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".jpg";
                                             File file = new File(dir, fileName);
                                             FileOutputStream fOut = new FileOutputStream(file);
                                             mBitmapToSave.compress(Bitmap.CompressFormat.JPEG, 85, fOut);
