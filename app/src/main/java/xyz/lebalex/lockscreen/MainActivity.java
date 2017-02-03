@@ -132,6 +132,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     private static GoogleApiClient mGoogleApiClient;
 
+    private static SharedPreferences sp;
+
 
     public void saveFileToDrive() {
         // Start by creating a new contents, and setting a callback.
@@ -440,9 +442,63 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
 
+        checkPermision();
+
+
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
+        int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
+        LogWrite.Log(this, "start APP, interval = "+interval/1000/60);
+        if (interval > 0) {
+
+            startBackgroundService(interval);
+        }
 
     }
+    private void startBackgroundService(int interval) {
+        Intent alarmIntent = new Intent(this, MyStartServiceReceiver.class);
+        PendingIntent pendingIntent;pendingIntent = PendingIntent.getBroadcast(this, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
 
+        //Log.i("MyActivity", "Set alarmManager.setRepeating");
+            /*AlarmManager.INTERVAL_FIFTEEN_MINUTES*/
+    }
+
+    protected void makeRequest() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                REQUEST_WRITE_STORAGE);
+    }
+
+    private void checkPermision() {
+        int permission = ContextCompat.checkSelfPermission(appContext,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            Log.i(TAG, "Permission to record denied");
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(appContext);
+                builder.setMessage("Permission to access the SD-CARD is required for this app to Download PDF.")
+                        .setTitle("Permission required");
+
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface dialog, int id) {
+                        Log.i(TAG, "Clicked");
+                        makeRequest();
+                    }
+                });
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+
+            } else {
+                makeRequest();
+            }
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -508,7 +564,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         //private AlarmManager manager;
 
         private int indd = 0;
-        private SharedPreferences sp;
+
 
         public PlaceholderFragment() {
         }
@@ -677,84 +733,43 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         private void reloadImage(String originalUrl) {
             originalUrlTemp = originalUrl;
-            mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            textView.setText("loading ...");
-            RotateAnimation rotateAnimation = new RotateAnimation(0f, 360 * 10, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f);
+            if(originalUrlTemp!=null) {
+                mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                textView.setText("loading ...");
+                RotateAnimation rotateAnimation = new RotateAnimation(0f, 360 * 10, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f);
 
-            rotateAnimation.setStartOffset(1);
-            rotateAnimation.setRepeatCount(-1);
-            rotateAnimation.setInterpolator(new AccelerateInterpolator());
-            rotateAnimation.setDuration(10000);
-            imageButton.startAnimation(rotateAnimation);
-            imageButton.setEnabled(false);
-            imageButton.setAlpha(0.7F);
-            mImageView.setEnabled(false);
-            mImageView.setAlpha(0.5F);
-            new Thread(new Runnable() {
-                public void run() {
-                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-                    StrictMode.setThreadPolicy(policy);
-                    bitmap = getBitMapFromUrl(originalUrlTemp);
-                    handler.post(new Runnable() {
-                        public void run() {
-                            setImageToView(bitmap);
-                            imageButton.clearAnimation();
-                            imageButton.setEnabled(true);
-                            imageButton.setAlpha(1F);
-                            mImageView.setEnabled(true);
-                            mImageView.setAlpha(1F);
-                            textView.setText("complite");
-                        }
-                    });
-                }
-            }).start();
-        }
-
-        protected void makeRequest() {
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_WRITE_STORAGE);
-        }
-
-        private void checkPermision() {
-            int permission = ContextCompat.checkSelfPermission(appContext,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-            if (permission != PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, "Permission to record denied");
-
-                if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(appContext);
-                    builder.setMessage("Permission to access the SD-CARD is required for this app to Download PDF.")
-                            .setTitle("Permission required");
-
-                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-
-                        public void onClick(DialogInterface dialog, int id) {
-                            Log.i(TAG, "Clicked");
-                            makeRequest();
-                        }
-                    });
-
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-
-                } else {
-                    makeRequest();
-                }
+                rotateAnimation.setStartOffset(1);
+                rotateAnimation.setRepeatCount(-1);
+                rotateAnimation.setInterpolator(new AccelerateInterpolator());
+                rotateAnimation.setDuration(10000);
+                imageButton.startAnimation(rotateAnimation);
+                imageButton.setEnabled(false);
+                imageButton.setAlpha(0.7F);
+                mImageView.setEnabled(false);
+                mImageView.setAlpha(0.5F);
+                new Thread(new Runnable() {
+                    public void run() {
+                        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                        StrictMode.setThreadPolicy(policy);
+                        bitmap = getBitMapFromUrl(originalUrlTemp);
+                        handler.post(new Runnable() {
+                            public void run() {
+                                setImageToView(bitmap);
+                                imageButton.clearAnimation();
+                                imageButton.setEnabled(true);
+                                imageButton.setAlpha(1F);
+                                mImageView.setEnabled(true);
+                                mImageView.setAlpha(1F);
+                                textView.setText("complite");
+                            }
+                        });
+                    }
+                }).start();
             }
         }
 
-        private void startBackgroundService(int interval) {
-            Intent alarmIntent = new Intent(getActivity(), MyStartServiceReceiver.class);
-            PendingIntent pendingIntent;pendingIntent = PendingIntent.getBroadcast(getActivity(), 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-            AlarmManager manager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
-            manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
 
-            //Log.i("MyActivity", "Set alarmManager.setRepeating");
-            /*AlarmManager.INTERVAL_FIFTEEN_MINUTES*/
-        }
+
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -769,11 +784,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             imageButtonPlus = (ImageButton) rootView.findViewById(R.id.button_plus);
             imageButtonCheck = (ImageButton) rootView.findViewById(R.id.button_check);
 
-            sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
-            if (interval > 0)
-                startBackgroundService(interval);
-
+            //sp = PreferenceManager.getDefaultSharedPreferences(appContext);
 
             textView.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -783,7 +794,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                     mBitmapToSave = mImageView.getDrawingCache();
 
-                    //SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(appContext);
+
                     if (sp.getBoolean("save_google_switch", false)) {
                         mDmImageView = mImageView;
                         mDmTextView = textView;
@@ -795,7 +806,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                     } else {
 
-                        checkPermision();
+
 
 
                         new Thread(new Runnable() {

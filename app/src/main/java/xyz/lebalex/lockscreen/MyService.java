@@ -2,20 +2,17 @@ package xyz.lebalex.lockscreen;
 
 import android.app.IntentService;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+
 import android.app.WallpaperManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 
 
 import com.google.android.gms.common.ConnectionResult;
@@ -31,7 +28,7 @@ import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
-import com.google.firebase.messaging.RemoteMessage;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,24 +57,10 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
         super("MyServiceName");
     }
 
-    private void Log(String str) {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        if(sp.getBoolean("save_log", false)) {
-            Calendar calen = Calendar.getInstance();
-            int c = calen.get(Calendar.DATE);
-            String logs = sp.getString("logs", "");
-            SharedPreferences.Editor editor = sp.edit();
-            editor.putString("logs", logs + calen.get(Calendar.YEAR) + "-" + calen.get(Calendar.MONTH) + "-" + calen.get(Calendar.DATE) + " " + calen.get(Calendar.HOUR_OF_DAY) + ":" +
-                    calen.get(Calendar.MINUTE) + ":" + calen.get(Calendar.SECOND) + " " + str + "\n");
-            editor.commit();
-        }
-    }
-
-
     @Override
     protected void onHandleIntent(Intent intent) {
         //Log.i("MyService", "About to execute MyTask");
-        Log("About to execute MyService");
+        LogWrite.Log(context, "About to execute MyService");
         try {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
             Calendar calen = Calendar.getInstance();
@@ -86,17 +69,17 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
                 int source_load_value = Integer.parseInt(sp.getString("source_load", "1"));
                 if (source_load_value == 3) {
                     //Log.i("MyService", "GooglwDrive");
-                    Log("GooglwDrive");
+                    LogWrite.Log(context, "GooglwDrive");
                     getImageFromGooglwDrive();
                 } else {
                     Bitmap bmp=null;
                     if (source_load_value == 1) {
                         //Log.i("MyService", "FromModile");
-                        Log("FromModile");
+                        LogWrite.Log(context, "FromModile");
                         bmp=imageForScreen(getFromModile(getImageName()));
                     } else {
                         //Log.i("MyService", "FromNetwork");
-                        Log("FromNetwork");
+                        LogWrite.Log(context, "FromNetwork");
                         bmp=imageForScreen(loadImageFromNetwork(sn));
                     }
                     if(bmp!=null)
@@ -112,13 +95,12 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
                             wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);
                     }
                 }
-
-            }
+                LogWrite.Log(context, "Set Wallpaper");
+            } else LogWrite.Log(context, "not time Set Wallpaper");
             //Log.i("MyService", "Set Wallpaper");
-            Log("Set Wallpaper");
         } catch (IOException e) {
             //Log.e("MyService", "Service ", e);
-            Log(e.getMessage());
+            LogWrite.Log(context, e.getMessage());
         }
     }
 
@@ -185,7 +167,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
             return bmp;
 
         } catch (Exception eee) {
-            Log(eee.getMessage());
+            LogWrite.Log(context, eee.getMessage());
             return null;
         }
     }
@@ -227,6 +209,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
 
     }
 
+    @Nullable
     private Bitmap getFromModile(String filePath) {
         File imgFile = new File(filePath);
         if (imgFile.exists())
@@ -376,7 +359,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
 
                     } catch (Exception e3) {
                         //Log.e("MyServiceGoole", "Exception e3", e3);
-                        Log(e3.getMessage());
+                        LogWrite.Log(context, e3.getMessage());
                     }
 
 
