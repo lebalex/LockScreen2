@@ -470,6 +470,12 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             frag.reloadImage(historyUrl.get(indexUrl - 1));
             return true;
         }
+        if (id == R.id.action_logs) {
+            //SettingsActivity.actionTo(this);
+            Intent i = new Intent(this, LogActivity.class);
+            startActivity(i);
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -498,8 +504,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         //private float scaleX, scaleY;
 
         private Intent mServiceIntent;
-        private PendingIntent pendingIntent;
-        private AlarmManager manager;
+        //private PendingIntent pendingIntent;
+        //private AlarmManager manager;
 
         private int indd = 0;
         private SharedPreferences sp;
@@ -742,8 +748,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         private void startBackgroundService(int interval) {
             Intent alarmIntent = new Intent(getActivity(), MyStartServiceReceiver.class);
-            pendingIntent = PendingIntent.getBroadcast(getActivity(), 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-            manager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
+            PendingIntent pendingIntent;pendingIntent = PendingIntent.getBroadcast(getActivity(), 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            AlarmManager manager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
             manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
 
             //Log.i("MyActivity", "Set alarmManager.setRepeating");

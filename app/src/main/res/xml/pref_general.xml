@@ -47,6 +47,12 @@
         android:summary="@string/flag_wall_summary"
         android:title="@string/flag_wall_Title" />
 
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="save_log"
+        android:summary=""
+        android:title="@string/save_log_Title" />
+
     <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
          dismiss it. -->
     <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->

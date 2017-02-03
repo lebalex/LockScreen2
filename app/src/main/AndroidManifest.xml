@@ -35,15 +35,20 @@
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings" />
 
-        <service android:name="MyService"></service>
-        <receiver android:name="xyz.lebalex.lockscreen.MyStartServiceReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <category android:name="android.intent.category.HOME" />
-            </intent-filter>
+        <service android:name=".MyService" />
 
+        <receiver android:name=".MyStartServiceReceiver">
         </receiver>
 
+        <receiver android:name="xyz.lebalex.lockscreen.BootBroadcastReceiver">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED" />
+            <category android:name="android.intent.category.HOME" />
+        </intent-filter>
+        </receiver>
+
+
+        <activity android:name=".LogActivity"></activity>
     </application>
 
 </manifest>

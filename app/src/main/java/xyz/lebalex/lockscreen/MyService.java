@@ -16,7 +16,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
-import android.util.Log;
+
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -60,9 +60,24 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
         super("MyServiceName");
     }
 
+    private void Log(String str) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        if(sp.getBoolean("save_log", false)) {
+            Calendar calen = Calendar.getInstance();
+            int c = calen.get(Calendar.DATE);
+            String logs = sp.getString("logs", "");
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putString("logs", logs + calen.get(Calendar.YEAR) + "-" + calen.get(Calendar.MONTH) + "-" + calen.get(Calendar.DATE) + " " + calen.get(Calendar.HOUR_OF_DAY) + ":" +
+                    calen.get(Calendar.MINUTE) + ":" + calen.get(Calendar.SECOND) + " " + str + "\n");
+            editor.commit();
+        }
+    }
+
+
     @Override
     protected void onHandleIntent(Intent intent) {
         //Log.i("MyService", "About to execute MyTask");
+        Log("About to execute MyService");
         try {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
             Calendar calen = Calendar.getInstance();
@@ -71,14 +86,17 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
                 int source_load_value = Integer.parseInt(sp.getString("source_load", "1"));
                 if (source_load_value == 3) {
                     //Log.i("MyService", "GooglwDrive");
+                    Log("GooglwDrive");
                     getImageFromGooglwDrive();
                 } else {
                     Bitmap bmp=null;
                     if (source_load_value == 1) {
                         //Log.i("MyService", "FromModile");
+                        Log("FromModile");
                         bmp=imageForScreen(getFromModile(getImageName()));
                     } else {
                         //Log.i("MyService", "FromNetwork");
+                        Log("FromNetwork");
                         bmp=imageForScreen(loadImageFromNetwork(sn));
                     }
                     if(bmp!=null)
@@ -97,8 +115,10 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
 
             }
             //Log.i("MyService", "Set Wallpaper");
+            Log("Set Wallpaper");
         } catch (IOException e) {
             //Log.e("MyService", "Service ", e);
+            Log(e.getMessage());
         }
     }
 
@@ -165,6 +185,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
             return bmp;
 
         } catch (Exception eee) {
+            Log(eee.getMessage());
             return null;
         }
     }
@@ -233,7 +254,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
         try {
             //result.startResolutionForResult(this, REQUEST_CODE_RESOLUTION);
         } catch (Exception e) {
-            Log.e("MyServiceGoole", "Exception while starting resolution activity", e);
+            //Log.e("MyServiceGoole", "Exception while starting resolution activity", e);
         }
     }
 
@@ -287,7 +308,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
 
                     } catch (Exception edr) {
                         //Toast.makeText(appContext, edr.getMessage(), Toast.LENGTH_SHORT).show();
-                        Log.e("MyServiceGoole", "Exception edr", edr);
+                        //Log.e("MyServiceGoole", "Exception edr", edr);
                     }
 
                 }
@@ -354,7 +375,8 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
                         }
 
                     } catch (Exception e3) {
-                        Log.e("MyServiceGoole", "Exception e3", e3);
+                        //Log.e("MyServiceGoole", "Exception e3", e3);
+                        Log(e3.getMessage());
                     }
 
 
