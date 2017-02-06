@@ -40,6 +40,7 @@
     <string name="pref_title_sync_frequency">Sync frequency</string>
     <string name="pref_title_update_frequency">Update frequency</string>
     <string-array name="pref_sync_frequency_titles">
+        <item>3 minutes</item>
         <item>15 minutes</item>
         <item>30 minutes</item>
         <item>1 hour</item>
@@ -48,6 +49,7 @@
         <item>Never</item>
     </string-array>
     <string-array name="pref_sync_frequency_values">
+        <item>3</item>
         <item>15</item>
         <item>30</item>
         <item>60</item>

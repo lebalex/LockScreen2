@@ -461,6 +461,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
 
+
         //Log.i("MyActivity", "Set alarmManager.setRepeating");
             /*AlarmManager.INTERVAL_FIFTEEN_MINUTES*/
     }
