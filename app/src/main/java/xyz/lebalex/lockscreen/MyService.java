@@ -4,12 +4,14 @@ import android.app.IntentService;
 
 
 import android.app.WallpaperManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -107,7 +109,12 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
     public Bitmap loadImageFromNetwork(int sn) {
         Bitmap bmp = null;
         int countLoad=0;
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
         try {
+
+            wl.acquire();
+
 
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 
@@ -188,6 +195,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
         catch (Exception eee) {
             LogWrite.Log(context, "Network error = "+eee.getMessage());
         }finally {
+            wl.release();
             return bmp;
         }
     }
