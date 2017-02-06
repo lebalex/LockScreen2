@@ -1,9 +1,8 @@
 package xyz.lebalex.lockscreen;
 
-import android.app.IntentService;
-
-
 import android.app.WallpaperManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -13,7 +12,6 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -28,7 +26,6 @@ import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
-
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,24 +42,24 @@ import java.util.Calendar;
 import java.util.Random;
 
 /**
- * Created by ivc_lebedevav on 12.01.2017.
+ * Created by ivc_lebedevav on 06.02.2017.
  */
 
-public class MyService extends IntentService implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class BackgroundReceiver extends BroadcastReceiver implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private int sn = 1;
     private static GoogleApiClient mGoogleApiClient;
-    private MyService context = this;
-
-    public MyService() {
-        super("MyServiceName");
-    }
+    private Context context = null;
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-        //Log.i("MyService", "About to execute MyTask");
-        LogWrite.Log(context, "About to execute MyService");
+    public void onReceive(Context context, Intent intent) {
+        LogWrite.Log(context, "start BroadcastReceiver");
+        this.context = context;
+        HandleIntent();
+    }
+    private void HandleIntent() {
+        LogWrite.Log(context, "execute HandleIntent");
         try {
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
             Calendar calen = Calendar.getInstance();
             int startTime = Integer.parseInt(sp.getString("update_start", "0"));
             if (calen.get(Calendar.HOUR_OF_DAY) > startTime) {
@@ -84,7 +81,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
                     }
                     if(bmp!=null)
                     {
-                        WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
+                        WallpaperManager wallpaperManager = WallpaperManager.getInstance(context);
                         wallpaperManager.clear();
                         //wallpaperManager.setBitmap(bmp);
                         if (sp.getBoolean("flag_wall", true)) {
@@ -242,7 +239,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
     }
 
     private void getImageFromGooglwDrive() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
+        mGoogleApiClient = new GoogleApiClient.Builder(context).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
         if (mGoogleApiClient.isConnected())
             mGoogleApiClient.disconnect();
         mGoogleApiClient.connect();
@@ -314,7 +311,7 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
 
                     } catch (Exception edr) {
                         //Toast.makeText(appContext, edr.getMessage(), Toast.LENGTH_SHORT).show();
-                        //Log.e("MyServiceGoole", "Exception edr", edr);
+                        LogWrite.Log(context, edr.getMessage());
                     }
 
                 }
@@ -357,11 +354,11 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
                     }
                     //Log.i("MyServiceGoole", "DriveContents");
                     try {
-                    DriveContents contents = result.getDriveContents();
-                    InputStream is = contents.getInputStream();
-                    Bitmap bitmap = null;
-                    bitmap = BitmapFactory.decodeStream(is);
-                    //Log.i("MyServiceGoole", "Bitmap");
+                        DriveContents contents = result.getDriveContents();
+                        InputStream is = contents.getInputStream();
+                        Bitmap bitmap = null;
+                        bitmap = BitmapFactory.decodeStream(is);
+                        //Log.i("MyServiceGoole", "Bitmap");
                         if(bitmap!=null) {
                             WallpaperManager wallpaperManager = WallpaperManager
                                     .getInstance(context);
@@ -388,4 +385,5 @@ public class MyService extends IntentService implements GoogleApiClient.Connecti
 
                 }
             };
+
 }

@@ -456,6 +456,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     }
     private void startBackgroundService(int interval) {
         Intent alarmIntent = new Intent(this, MyStartServiceReceiver.class);
+        //Intent alarmIntent = new Intent(this, BackgroundReceiver.class);
         PendingIntent pendingIntent;pendingIntent = PendingIntent.getBroadcast(this, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
@@ -680,20 +681,18 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                             try {
                                 Bitmap bitMap = null;
                                 bitMap = mImageView.getDrawingCache(true);
+                                if(bitMap!=null) {
+                                    WallpaperManager wallpaperManager = WallpaperManager
+                                            .getInstance(appContext);
 
-                                WallpaperManager wallpaperManager = WallpaperManager
-                                        .getInstance(appContext);
+                                    wallpaperManager.clear();
 
-
-                                wallpaperManager.clear();
-
-                                if (sp.getBoolean("flag_wall", true)) {
-                                    wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_SYSTEM);
-                                    wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
+                                    if (sp.getBoolean("flag_wall", true)) {
+                                        wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_SYSTEM);
+                                        wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
+                                    } else
+                                        wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
                                 }
-                                else
-                                    wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
-
                                 textView.setText("set Wallpaper");
                                 mImageView.setEnabled(true);
                                 mImageView.setAlpha(1F);
@@ -806,15 +805,10 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                     } else {
 
-
-
-
                         new Thread(new Runnable() {
                             public void run() {
-
                                 handler.post(new Runnable() {
                                     public void run() {
-
                                         try {
                                             String file_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/LockScreen";
                                             File dir = new File(file_path);
@@ -836,8 +830,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                         }
                                     }
                                 });
-
-
                             }
                         }).start();
                     }

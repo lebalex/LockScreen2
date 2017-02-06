@@ -21,6 +21,7 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
         int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
         if (interval > 0) {
             Intent alarmIntent = new Intent(pContext, MyStartServiceReceiver.class);
+            //Intent alarmIntent = new Intent(pContext, BackgroundReceiver.class);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(pContext, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
             AlarmManager manager = (AlarmManager) pContext.getSystemService(Context.ALARM_SERVICE);
             manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
