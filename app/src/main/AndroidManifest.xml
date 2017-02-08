@@ -36,13 +36,10 @@
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings" />
 
-        <service android:name="xyz.lebalex.lockscreen.MyService" />
+        <service android:name="xyz.lebalex.lockscreen.LockScreenService" />
 
-        <receiver android:name="xyz.lebalex.lockscreen.MyStartServiceReceiver" />
+        <receiver android:name="xyz.lebalex.lockscreen.LockScreenServiceReceiver" />
 
-
-        <!--receiver android:name="xyz.lebalex.lockscreen.BackgroundReceiver">
-        </receiver-->
 
         <receiver android:name="xyz.lebalex.lockscreen.BootBroadcastReceiver">
         <intent-filter>

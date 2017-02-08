@@ -455,8 +455,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     }
     private void startBackgroundService(int interval) {
-        Intent alarmIntent = new Intent(this, MyStartServiceReceiver.class);
-        //Intent alarmIntent = new Intent(this, BackgroundReceiver.class);
+        Intent alarmIntent = new Intent(this, LockScreenServiceReceiver.class);
         PendingIntent pendingIntent;pendingIntent = PendingIntent.getBroadcast(this, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
@@ -1016,10 +1015,12 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 String urls = "";
                 switch (sn) {
                     case 1:
-                        urls = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";
+                        //urls = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";
+                        urls = "http://lebalex.xyz/lockscreen/erotic.php";
                         break;
                     case 2:
-                        urls = "http://lebalexwebapp.azurewebsites.net/lockscreen/rand500.aspx";
+                        //urls = "http://lebalexwebapp.azurewebsites.net/lockscreen/rand500.aspx";
+                        urls = "http://lebalex.xyz/lockscreen/lock500p.php";
                         break;
 
                 }

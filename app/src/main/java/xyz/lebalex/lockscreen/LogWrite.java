@@ -13,6 +13,7 @@ import java.util.Calendar;
 public class LogWrite {
     public static void Log(Context pContext, String str) {
         try {
+            //Log.i("LogWrite", str);
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(pContext);
             if (sp.getBoolean("save_log", false)) {
                 Calendar calen = Calendar.getInstance();
