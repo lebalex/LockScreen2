@@ -55,22 +55,31 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
     private static GoogleApiClient mGoogleApiClient;
     private LockScreenService context = this;
 
+    //public static final int NOTIFICATION_ID = 1;
+    //private NotificationManager mNotificationManager;
+    //NotificationCompat.Builder builder;
+
     public LockScreenService() {
         super("LockScreenService");
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        LogWrite.Log(context, "About to execute LockScreenService");
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LockScreenService");
+
+            Bundle extras = intent.getExtras();
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LockScreenService");
         try {
             wl.acquire();
+            LogWrite.Log(context, "About to execute LockScreenService");
+
+
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
             int source_load_value = Integer.parseInt(sp.getString("source_load", "1"));
             Bitmap bmp = null;
             int countLoad=0;
             while (bmp == null && countLoad < 3) {
+                LogWrite.Log(context,"countLoad = "+countLoad);
                 switch (source_load_value) {
                     case 1:
                         LogWrite.Log(context, "FromModile");
@@ -83,6 +92,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                     case 3:
                         LogWrite.Log(context, "GooglwDrive");
                         getImageFromGooglwDrive();
+                        countLoad=3;
                         break;
                 }
                 countLoad++;
@@ -101,107 +111,114 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                     wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);
 
                 LogWrite.Log(context, "Set Wallpaper");
-            } else
-                LogWrite.Log(context, "bmp null");
+            }
 
         } catch (IOException e) {
-            LogWrite.Log(context, e.getMessage());
+            LogWrite.LogError(context, e.getMessage());
         } finally {
             wl.release();
+            LockScreenServiceReceiver.completeWakefulIntent(intent);
         }
     }
 
     public Bitmap loadImageFromNetwork(int sn) {
+        LogWrite.Log(context, "loadImageFromNetwork");
         Bitmap bmp = null;
         int countLoad = 0;
-
-        //PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        //PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LockScreenService");
-        //wl.acquire();
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
-        String[] urls = null;
-        switch (sn) {
-            case 1:
-                urls[0] = "http://lebalex.xyz/lockscreen/erotic.php";
-                urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";
-                break;
-            case 2:
-                urls[0] = "http://lebalex.xyz/lockscreen/lock500p.php";
-                urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/rand500.aspx";
-                break;
-
-        }
-        int sUrl = 0;
-
-        while (bmp == null && countLoad < 5) {
-            String select_urls = urls[sUrl];
-            try {
-                LogWrite.Log(context, "countLoad = " + countLoad);
-                LogWrite.Log(context, "select_urls = " + select_urls);
-                URL url = new URL(select_urls);
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    LogWrite.Log(context, "first step HTTP_OK");
-
-                    InputStream inputStream = urlConnection.getInputStream();
-                    StringBuffer buffer = new StringBuffer();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                    String line;
-                    if ((line = reader.readLine()) != null) {
-                        buffer.append(line);
-                    }
-                    String resultJson = buffer.toString();
-                    JSONObject dataJsonObj = null;
-                    String url_json = null;
-                    try {
-                        JSONArray jsonArray = new JSONArray(resultJson);
-                        String urlName = jsonArray.getString(0);
-                        url_json = jsonArray.getString(1);
-                    } catch (JSONException e) {
-                        url_json = null;
-                        LogWrite.Log(context, "JSONException = " + e.getMessage());
-                    }
-
-                    if (url_json != null) {
-                        url = new URL(url_json);
-                        urlConnection = (HttpURLConnection) url.openConnection();
-                        urlConnection.setRequestMethod("GET");
-                        urlConnection.connect();
-                        if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                            LogWrite.Log(context, "second step HTTP_OK");
-
-                            InputStream imageStream = urlConnection.getInputStream();
-                            bmp = BitmapFactory.decodeStream(imageStream);
-                            if (bmp != null) {
-                                if (bmp.getHeight() < bmp.getWidth()) {
-                                    LogWrite.Log(context, "Height < Width");
-                                    bmp = null;
-                                }
-                            }
-                        } else
-                            LogWrite.Log(context, "second step HTTP_BAD");
-                    } else {
-                        LogWrite.Log(context, "url_json=null");
-                    }
-                } else
-                    LogWrite.Log(context, "first step HTTP_BAD");
-
-            } catch (java.net.ConnectException e_t) {
-                LogWrite.Log(context, "Network error ConnectException = " + e_t.getMessage());
-                sUrl = (sUrl == 0) ? 1 : 0;
-                bmp = null;
-            } catch (Exception eee) {
-                LogWrite.Log(context, "Network error = " + eee.getMessage());
-                sUrl = (sUrl == 0) ? 1 : 0;
-                bmp = null;
+        HttpURLConnection urlConnection = null;
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+            String[] urls = new String[2];
+            switch (sn) {
+                case 1:
+                    urls[0] = "http://lebalex.xyz/lockscreen/erotic.php";
+                    urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";
+                    break;
+                case 2:
+                    urls[0] = "http://lebalex.xyz/lockscreen/lock500p.php";
+                    urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/rand500.aspx";
+                    break;
             }
-            countLoad++;
-        }
-        //wl.release();
+            int sUrl = 0;
+
+            while (bmp == null && countLoad < 5) {
+                String select_urls = urls[sUrl];
+                try {
+                    LogWrite.Log(context, "countLoad = " + countLoad);
+                    LogWrite.Log(context, "select_urls = " + select_urls);
+                    URL url = new URL(select_urls);
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setConnectTimeout(20000);
+                    urlConnection.setReadTimeout(20000);
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.setDoInput(true);
+                    urlConnection.connect();
+
+                    if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        LogWrite.Log(context, "first step HTTP_OK");
+
+                        InputStream inputStream = urlConnection.getInputStream();
+                        StringBuffer buffer = new StringBuffer();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                        String line;
+                        if ((line = reader.readLine()) != null) {
+                            buffer.append(line);
+                        }
+                        String resultJson = buffer.toString();
+                        JSONObject dataJsonObj = null;
+                        String url_json = null;
+                        try {
+                            JSONArray jsonArray = new JSONArray(resultJson);
+                            String urlName = jsonArray.getString(0);
+                            url_json = jsonArray.getString(1);
+                        } catch (JSONException e) {
+                            url_json = null;
+                            LogWrite.LogError(context, "JSONException = " + e.getMessage());
+                        }
+
+                        if (url_json != null) {
+                            LogWrite.Log(context, "image url = " + url_json);
+                            url = new URL(url_json);
+                            urlConnection = (HttpURLConnection) url.openConnection();
+                            urlConnection.setConnectTimeout(20000);
+                            urlConnection.setReadTimeout(20000);
+                            urlConnection.setRequestMethod("GET");
+                            urlConnection.setDoInput(true);
+                            urlConnection.connect();
+                            if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                                LogWrite.Log(context, "second step HTTP_OK");
+
+                                InputStream imageStream = urlConnection.getInputStream();
+                                bmp = BitmapFactory.decodeStream(imageStream);
+                                if (bmp != null) {
+                                    if (bmp.getHeight() < bmp.getWidth()) {
+                                        LogWrite.Log(context, "Height < Width");
+                                        bmp = null;
+                                    }
+                                }
+                            } else
+                                LogWrite.Log(context, "second step HTTP_BAD");
+                        } else {
+                            LogWrite.Log(context, "url_json=null");
+                        }
+                    } else
+                        LogWrite.Log(context, "first step HTTP_BAD");
+
+                } catch (java.net.ConnectException e_t) {
+                    LogWrite.LogError(context, "Network error ConnectException = " + e_t.getMessage());
+                    sUrl = (sUrl == 0) ? 1 : 0;
+                    bmp = null;
+                } catch (Exception eee) {
+                    LogWrite.LogError(context, "Network error = " + eee.getMessage());
+                    sUrl = (sUrl == 0) ? 1 : 0;
+                    bmp = null;
+                }finally {
+                    if(urlConnection!=null)
+                        urlConnection.disconnect();
+                }
+
+                countLoad++;
+            }
         return bmp;
     }
 
@@ -234,6 +251,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
         File[] files = directory.listFiles();
         Random rnd = new Random();
         String f = file_path + "/" + files[rnd.nextInt(files.length - 1)].getName();
+        LogWrite.Log(context, f);
         return f;
 
     }
@@ -241,10 +259,13 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
     @Nullable
     private Bitmap getFromModile(String filePath) {
         File imgFile = new File(filePath);
-        if (imgFile.exists())
+        if (imgFile.exists()) {
+            LogWrite.Log(context, "decodeFile "+imgFile.getAbsolutePath());
             return BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-        else
+        }else {
+            LogWrite.Log(context,filePath+" not exists");
             return null;
+        }
     }
 
     private void getImageFromGooglwDrive() {
@@ -261,7 +282,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
         }
         try {
         } catch (Exception e) {
-            LogWrite.Log(context, "Exception while starting resolution activity " + e.getMessage());
+            LogWrite.LogError(context, "Exception while starting resolution activity " + e.getMessage());
         }
     }
 
@@ -289,7 +310,6 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                     LogWrite.Log(context, "New contents created.");
                     final String folderName = "LockScreen";
                     try {
-                        LogWrite.Log(context, "Query.Builder");
                         Query query = new Query.Builder().addFilter(Filters.and(
                                 Filters.eq(SearchableField.TITLE, folderName),
                                 Filters.eq(SearchableField.TRASHED, false))).build();
@@ -310,7 +330,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                         );
 
                     } catch (Exception edr) {
-                        LogWrite.Log(context, "Exception edr " + edr.getMessage());
+                        LogWrite.LogError(context, "Exception edr " + edr.getMessage());
                     }
 
                 }
@@ -324,7 +344,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                         return;
                     }
                     MetadataBuffer aaa = result.getMetadataBuffer();
-
+                    LogWrite.Log(context, "image count = "+aaa.getCount());
                     if (aaa.getCount() > 0) {
                         Random rnd = new Random();
                         DriveFile file = Drive.DriveApi.getFile(mGoogleApiClient,
@@ -361,10 +381,13 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                                 wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);
                             } else
                                 wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);
-                        }
+
+                            LogWrite.Log(context, "Google set Wallpaper");
+                        }else
+                            LogWrite.Log(context, "Google bitmap == null");
 
                     } catch (Exception e3) {
-                        LogWrite.Log(context, e3.getMessage());
+                        LogWrite.LogError(context, e3.getMessage());
                     }
 
 

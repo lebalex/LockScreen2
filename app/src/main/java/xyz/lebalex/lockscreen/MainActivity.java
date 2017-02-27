@@ -88,6 +88,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
@@ -446,23 +447,47 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
 
         sp = PreferenceManager.getDefaultSharedPreferences(this);
-        int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
-        LogWrite.Log(this, "start APP, interval = "+interval/1000/60);
-        if (interval > 0) {
 
-            startBackgroundService(interval);
+        if(!sp.getBoolean("start_service",false)) {
+            int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
+            int startTime = Integer.parseInt(sp.getString("update_start", "0"));
+            LogWrite.Log(this, "start APP, interval = " + interval / 1000 / 60);
+            startBackgroundService(interval, startTime);
         }
 
     }
-    private void startBackgroundService(int interval) {
+    private void startBackgroundService(int interval, int startTime) {
         Intent alarmIntent = new Intent(this, LockScreenServiceReceiver.class);
         PendingIntent pendingIntent;pendingIntent = PendingIntent.getBroadcast(this, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
 
 
-        //Log.i("MyActivity", "Set alarmManager.setRepeating");
-            /*AlarmManager.INTERVAL_FIFTEEN_MINUTES*/
+        Calendar curentTime = Calendar.getInstance();
+
+        Calendar startCalen = Calendar.getInstance();
+        startCalen.set(Calendar.HOUR_OF_DAY, startTime);
+        startCalen.set(Calendar.MINUTE, 5);
+        startCalen.set(Calendar.SECOND, 0);
+        startCalen.set(Calendar.MILLISECOND, 0);
+
+        boolean find=false;
+        while(!find)
+        {
+            //String a1 = curentTime.get(Calendar.YEAR)+"-"+curentTime.get(Calendar.MONTH)+"-"+curentTime.get(Calendar.DATE)+" "+curentTime.get(Calendar.HOUR_OF_DAY)+":"+curentTime.get(Calendar.MINUTE)+":"+curentTime.get(Calendar.SECOND);
+            //String a2 = startCalen.get(Calendar.YEAR)+"-"+startCalen.get(Calendar.MONTH)+"-"+startCalen.get(Calendar.DATE)+" "+startCalen.get(Calendar.HOUR_OF_DAY)+":"+startCalen.get(Calendar.MINUTE)+":"+startCalen.get(Calendar.SECOND);
+            if(curentTime.before(startCalen))
+                find=true;
+            else
+                startCalen.add(Calendar.MILLISECOND, interval);
+        }
+
+
+        manager.setRepeating(AlarmManager.RTC_WAKEUP, startCalen.getTimeInMillis(), interval, pendingIntent);
+
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putBoolean("start_service",true);
+        editor.commit();
+        LogWrite.Log(this, "start Alarm "+startCalen.get(Calendar.YEAR)+"-"+startCalen.get(Calendar.MONTH)+"-"+startCalen.get(Calendar.DATE)+" "+startCalen.get(Calendar.HOUR_OF_DAY)+":"+startCalen.get(Calendar.MINUTE)+":"+startCalen.get(Calendar.SECOND));
     }
 
     protected void makeRequest() {
@@ -533,6 +558,15 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             startActivity(i);
             return true;
         }
+        if (id == R.id.action_restart_service) {
+            int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
+            int startTime = Integer.parseInt(sp.getString("update_start", "0"));
+            LogWrite.Log(this, "--restart APP, interval = " + interval / 1000 / 60);
+            startBackgroundService(interval, startTime);
+            return true;
+        }
+
+
         return super.onOptionsItemSelected(item);
     }
 

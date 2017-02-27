@@ -9,7 +9,8 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:id="@+id/frr"
     tools:context="xyz.lebalex.lockscreen.MainActivity$PlaceholderFragment"
-    android:background="@android:color/background_dark">
+    android:background="@android:color/background_dark"
+    android:keepScreenOn="true">
 >
     <GridLayout
         android:rowCount="2"

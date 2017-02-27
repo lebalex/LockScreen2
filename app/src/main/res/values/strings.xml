@@ -18,6 +18,7 @@
     <string name="flag_wall_Title">flag LOCK or SYSTEM</string>
     <string name="save_log_Title">save log</string>
 <string name="action_logs">Logs</string>
+    <string name="action_restart_service">Restart Service</string>
 
     <string name="pref_title_update_start">Start update</string>
     <string name="pref_default_update_start">0</string>
