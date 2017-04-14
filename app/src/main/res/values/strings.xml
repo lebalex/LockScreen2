@@ -15,8 +15,9 @@
     <string name="pref_title_image_from_inet">Image from inet</string>
     <string name="pref_description_image_from_inet"></string>
     <string name="flag_wall_summary"></string>
-    <string name="flag_wall_Title">flag LOCK or SYSTEM</string>
-    <string name="save_log_Title">save log</string>
+    <string name="flag_wall_Title">LOCK or SYSTEM</string>
+    <string name="save_log_Title">Save log</string>
+    <string name="home_Title">Home pictures</string>
 <string name="action_logs">Logs</string>
     <string name="action_restart_service">Restart Service</string>
 

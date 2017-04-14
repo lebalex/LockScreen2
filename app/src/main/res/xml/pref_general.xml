@@ -53,6 +53,11 @@
         android:summary=""
         android:title="@string/save_log_Title" />
 
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="home_pic"
+        android:summary=""
+        android:title="@string/home_Title" />
 
 
     <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to

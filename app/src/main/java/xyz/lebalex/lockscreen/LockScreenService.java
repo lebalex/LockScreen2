@@ -87,7 +87,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                         break;
                     case 2:
                         LogWrite.Log(context, "FromNetwork");
-                        bmp = imageForScreen(loadImageFromNetwork(sn));
+                        bmp = imageForScreen(loadImageFromNetwork(sn, sp));
                         break;
                     case 3:
                         LogWrite.Log(context, "GooglwDrive");
@@ -121,7 +121,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
         }
     }
 
-    public Bitmap loadImageFromNetwork(int sn) {
+    public Bitmap loadImageFromNetwork(int sn, SharedPreferences sp) {
         LogWrite.Log(context, "loadImageFromNetwork");
         Bitmap bmp = null;
         int countLoad = 0;
@@ -131,8 +131,16 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
             String[] urls = new String[2];
             switch (sn) {
                 case 1:
-                    urls[0] = "http://lebalex.xyz/lockscreen/erotic.php";
-                    urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";
+                    /*urls[0] = "http://lebalex.xyz/lockscreen/erotic.php";
+                    urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";*/
+
+                    if (sp.getBoolean("home_pic", true)) {
+                        urls[0] = "http://lebalex.xyz/lockscreen/lockhome.php";
+                        urls[1] = urls[0];
+                    }else
+                    {urls[0] = "http://lebalex.xyz/lockscreen/erotic.php";
+                        urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";}
+
                     break;
                 case 2:
                     urls[0] = "http://lebalex.xyz/lockscreen/lock500p.php";

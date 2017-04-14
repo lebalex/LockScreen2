@@ -1050,7 +1050,10 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 switch (sn) {
                     case 1:
                         //urls = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";
-                        urls = "http://lebalex.xyz/lockscreen/erotic.php";
+                        if (sp.getBoolean("home_pic", true))
+                            urls = "http://lebalex.xyz/lockscreen/lockhome.php";
+                        else
+                            urls = "http://lebalex.xyz/lockscreen/erotic.php";
                         break;
                     case 2:
                         //urls = "http://lebalexwebapp.azurewebsites.net/lockscreen/rand500.aspx";
