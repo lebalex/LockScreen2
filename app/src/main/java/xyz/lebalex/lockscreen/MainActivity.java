@@ -14,8 +14,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -217,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                                                                                     DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
                                                                                                     java.util.Calendar c = java.util.Calendar.getInstance();
                                                                                                     MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                                                                                                            .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + (c.get(java.util.Calendar.MONTH)+1) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
+                                                                                                            .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + (c.get(java.util.Calendar.MONTH) + 1) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
 
                                                                                                     folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
                                                                                                             .setResultCallback(fileCallback);
@@ -369,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                     if (aaa.getCount() > 0) {
                         Random rnd = new Random();
-                        int idx=rnd.nextInt(aaa.getCount() - 1);
+                        int idx = rnd.nextInt(aaa.getCount() - 1);
 
                         mDmTextView.setText(aaa.get(idx).getTitle());
                         DriveFile file = Drive.DriveApi.getFile(mGoogleApiClient,
@@ -448,7 +450,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         sp = PreferenceManager.getDefaultSharedPreferences(this);
 
-        if(!sp.getBoolean("start_service",false)) {
+        if (!sp.getBoolean("start_service", false)) {
             int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
             int startTime = Integer.parseInt(sp.getString("update_start", "0"));
             LogWrite.Log(this, "start APP, interval = " + interval / 1000 / 60);
@@ -456,38 +458,42 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         }
 
     }
+
     private void startBackgroundService(int interval, int startTime) {
         Intent alarmIntent = new Intent(this, LockScreenServiceReceiver.class);
-        PendingIntent pendingIntent;pendingIntent = PendingIntent.getBroadcast(this, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent pendingIntent;
+        pendingIntent = PendingIntent.getBroadcast(this, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
+        if (interval > 0) {
+            Calendar curentTime = Calendar.getInstance();
 
-        Calendar curentTime = Calendar.getInstance();
+            Calendar startCalen = Calendar.getInstance();
+            startCalen.set(Calendar.HOUR_OF_DAY, startTime);
+            startCalen.set(Calendar.MINUTE, 5);
+            startCalen.set(Calendar.SECOND, 0);
+            startCalen.set(Calendar.MILLISECOND, 0);
 
-        Calendar startCalen = Calendar.getInstance();
-        startCalen.set(Calendar.HOUR_OF_DAY, startTime);
-        startCalen.set(Calendar.MINUTE, 5);
-        startCalen.set(Calendar.SECOND, 0);
-        startCalen.set(Calendar.MILLISECOND, 0);
+            boolean find = false;
+            while (!find) {
+                //String a1 = curentTime.get(Calendar.YEAR)+"-"+curentTime.get(Calendar.MONTH)+"-"+curentTime.get(Calendar.DATE)+" "+curentTime.get(Calendar.HOUR_OF_DAY)+":"+curentTime.get(Calendar.MINUTE)+":"+curentTime.get(Calendar.SECOND);
+                //String a2 = startCalen.get(Calendar.YEAR)+"-"+startCalen.get(Calendar.MONTH)+"-"+startCalen.get(Calendar.DATE)+" "+startCalen.get(Calendar.HOUR_OF_DAY)+":"+startCalen.get(Calendar.MINUTE)+":"+startCalen.get(Calendar.SECOND);
+                if (curentTime.before(startCalen))
+                    find = true;
+                else
+                    startCalen.add(Calendar.MILLISECOND, interval);
+            }
 
-        boolean find=false;
-        while(!find)
-        {
-            //String a1 = curentTime.get(Calendar.YEAR)+"-"+curentTime.get(Calendar.MONTH)+"-"+curentTime.get(Calendar.DATE)+" "+curentTime.get(Calendar.HOUR_OF_DAY)+":"+curentTime.get(Calendar.MINUTE)+":"+curentTime.get(Calendar.SECOND);
-            //String a2 = startCalen.get(Calendar.YEAR)+"-"+startCalen.get(Calendar.MONTH)+"-"+startCalen.get(Calendar.DATE)+" "+startCalen.get(Calendar.HOUR_OF_DAY)+":"+startCalen.get(Calendar.MINUTE)+":"+startCalen.get(Calendar.SECOND);
-            if(curentTime.before(startCalen))
-                find=true;
-            else
-                startCalen.add(Calendar.MILLISECOND, interval);
+
+            manager.setRepeating(AlarmManager.RTC_WAKEUP, startCalen.getTimeInMillis(), interval, pendingIntent);
+
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putBoolean("start_service", true);
+            editor.commit();
+            LogWrite.Log(this, "start Alarm " + startCalen.get(Calendar.YEAR) + "-" + startCalen.get(Calendar.MONTH) + "-" + startCalen.get(Calendar.DATE) + " " + startCalen.get(Calendar.HOUR_OF_DAY) + ":" + startCalen.get(Calendar.MINUTE) + ":" + startCalen.get(Calendar.SECOND));
+        } else {
+            LogWrite.Log(this, "stop Alarm");
         }
-
-
-        manager.setRepeating(AlarmManager.RTC_WAKEUP, startCalen.getTimeInMillis(), interval, pendingIntent);
-
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putBoolean("start_service",true);
-        editor.commit();
-        LogWrite.Log(this, "start Alarm "+startCalen.get(Calendar.YEAR)+"-"+startCalen.get(Calendar.MONTH)+"-"+startCalen.get(Calendar.DATE)+" "+startCalen.get(Calendar.HOUR_OF_DAY)+":"+startCalen.get(Calendar.MINUTE)+":"+startCalen.get(Calendar.SECOND));
     }
 
     protected void makeRequest() {
@@ -617,13 +623,37 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         }
 
         private void setImageToView(Bitmap bitmap) {
+
+            /*Bitmap bmOverlay = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
+            Canvas canvas = new Canvas(bmOverlay);
+            canvas.drawBitmap(bitmap, new Matrix(), null);
+            Paint p = new Paint();
+            p.setColor(Color.BLACK);
+            p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
+            canvas.drawRect(0,0,mImageView.getWidth(),mImageView.getHeight(),p);*/
+
+
+
             mImageView.invalidate();
             mImageView.setScrollX(0);
             mImageView.setScrollY(0);
             mImageView.setDrawingCacheEnabled(false);
             mImageView.setImageBitmap(bitmap);
+            //mImageView.setImageBitmap(bmOverlay);
             mImageView.setDrawingCacheEnabled(true);
             mImageView.buildDrawingCache();
+
+            /*Bitmap bmp = Bitmap.createBitmap(mImageView.getWidth(), mImageView.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(bmp);
+            mImageView.draw(c);
+
+            Paint p = new Paint();
+            p.setColor(Color.BLACK);
+            p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
+            c.drawRect(0,0,mImageView.getWidth(),mImageView.getHeight(),p);
+
+            mImageView.setImageBitmap(bmp);*/
+
         }
 
 
@@ -653,7 +683,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         //google drive
                         mDmImageView = mImageView;
                         mDmTextView = textView;
-                        mDmImageButton=imageButton;
+                        mDmImageButton = imageButton;
                         if (mGoogleApiClient.isConnected())
                             mGoogleApiClient.disconnect();
                         saveGoogleDrive = false;
@@ -713,19 +743,44 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     handler.post(new Runnable() {
                         public void run() {
                             try {
+
+                                /*Bitmap bmp = Bitmap.createBitmap(mImageView.getWidth(), mImageView.getHeight(), Bitmap.Config.ARGB_8888);
+                                Canvas c = new Canvas(bmp);
+                                mImageView.draw(c);
+
+                                Paint p = new Paint();
+                                p.setColor(Color.BLACK);
+                                p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
+                                c.drawRect(0,0,mImageView.getWidth(),mImageView.getHeight(),p);
+
+                                mImageView.setImageBitmap(bmp);*/
+
+
                                 Bitmap bitMap = null;
                                 bitMap = mImageView.getDrawingCache(true);
-                                if(bitMap!=null) {
+                                if (bitMap != null) {
+
+                                    Bitmap bmOverlay = Bitmap.createBitmap(bitMap.getWidth(), bitMap.getHeight(), bitMap.getConfig());
+                                    Canvas canvas = new Canvas(bmOverlay);
+                                    canvas.drawBitmap(bitMap, new Matrix(), null);
+                                    Paint p = new Paint();
+                                    p.setColor(Color.BLACK);
+                                    p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
+                                    canvas.drawRect(0,0,bitMap.getWidth(),bitMap.getHeight(),p);
+
+
                                     WallpaperManager wallpaperManager = WallpaperManager
                                             .getInstance(appContext);
 
                                     wallpaperManager.clear();
 
-                                    if (sp.getBoolean("flag_wall", true)) {
+                                    /*if (sp.getBoolean("flag_wall", true)) {
                                         wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_SYSTEM);
                                         wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
                                     } else
-                                        wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
+                                        wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);*/
+                                    wallpaperManager.setBitmap(bmOverlay);
+
                                 }
                                 textView.setText("set Wallpaper");
                                 mImageView.setEnabled(true);
@@ -766,7 +821,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         private void reloadImage(String originalUrl) {
             originalUrlTemp = originalUrl;
-            if(originalUrlTemp!=null) {
+            if (originalUrlTemp != null) {
                 mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 textView.setText("loading ...");
                 RotateAnimation rotateAnimation = new RotateAnimation(0f, 360 * 10, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f);
@@ -800,8 +855,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 }).start();
             }
         }
-
-
 
 
         @Override
@@ -849,7 +902,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                             if (!dir.exists())
                                                 dir.mkdirs();
                                             java.util.Calendar c = java.util.Calendar.getInstance();
-                                            String fileName = "image" + c.get(java.util.Calendar.YEAR) + (c.get(java.util.Calendar.MONTH)+1) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".jpg";
+                                            String fileName = "image" + c.get(java.util.Calendar.YEAR) + (c.get(java.util.Calendar.MONTH) + 1) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".jpg";
                                             File file = new File(dir, fileName);
                                             FileOutputStream fOut = new FileOutputStream(file);
                                             mBitmapToSave.compress(Bitmap.CompressFormat.JPEG, 85, fOut);

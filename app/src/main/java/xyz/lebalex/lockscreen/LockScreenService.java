@@ -9,6 +9,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
@@ -102,13 +106,23 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                     source_load_value=1;
             }
             if (bmp != null) {
+
+                Bitmap bmOverlay = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());
+                Canvas canvas = new Canvas(bmOverlay);
+                canvas.drawBitmap(bmp, new Matrix(), null);
+                Paint p = new Paint();
+                p.setColor(Color.BLACK);
+                p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
+                canvas.drawRect(0,0,bmp.getWidth(),bmp.getHeight(),p);
+
                 WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
                 wallpaperManager.clear();
-                if (sp.getBoolean("flag_wall", true)) {
+                /*if (sp.getBoolean("flag_wall", true)) {
                     wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_SYSTEM);
                     wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);
                 } else
-                    wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);
+                    wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);*/
+                wallpaperManager.setBitmap(bmOverlay);
 
                 LogWrite.Log(context, "Set Wallpaper");
             }
@@ -156,8 +170,8 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                     LogWrite.Log(context, "select_urls = " + select_urls);
                     URL url = new URL(select_urls);
                     urlConnection = (HttpURLConnection) url.openConnection();
-                    urlConnection.setConnectTimeout(20000);
-                    urlConnection.setReadTimeout(20000);
+                    //urlConnection.setConnectTimeout(20000);
+                    //urlConnection.setReadTimeout(20000);
                     urlConnection.setRequestMethod("GET");
                     urlConnection.setDoInput(true);
                     urlConnection.connect();
@@ -188,8 +202,8 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                             LogWrite.Log(context, "image url = " + url_json);
                             url = new URL(url_json);
                             urlConnection = (HttpURLConnection) url.openConnection();
-                            urlConnection.setConnectTimeout(20000);
-                            urlConnection.setReadTimeout(20000);
+                            //urlConnection.setConnectTimeout(20000);
+                            //urlConnection.setReadTimeout(20000);
                             urlConnection.setRequestMethod("GET");
                             urlConnection.setDoInput(true);
                             urlConnection.connect();
@@ -384,11 +398,12 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
 
                             bitmap = imageForScreen(bitmap);
                             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-                            if (sp.getBoolean("flag_wall", true)) {
+                            /*if (sp.getBoolean("flag_wall", true)) {
                                 wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_SYSTEM);
                                 wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);
                             } else
-                                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);
+                                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);*/
+                            wallpaperManager.setBitmap(bitmap);
 
                             LogWrite.Log(context, "Google set Wallpaper");
                         }else

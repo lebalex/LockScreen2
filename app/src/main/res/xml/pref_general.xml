@@ -59,6 +59,16 @@
         android:summary=""
         android:title="@string/home_Title" />
 
+    <EditTextPreference
+        android:capitalize="words"
+        android:defaultValue="@string/pref_default_alpha_value"
+        android:inputType="numberSigned"
+        android:key="alpha_value"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_title_alpha_value" />
+
 
     <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
          dismiss it. -->
