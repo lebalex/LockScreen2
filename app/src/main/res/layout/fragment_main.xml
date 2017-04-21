@@ -83,6 +83,19 @@
             android:layout_gravity="left"
             android:adjustViewBounds="false"
             android:layout_marginLeft="136dp"/>
+        <ImageButton
+            android:layout_row="0"
+            android:layout_column="0"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:text="back"
+            android:id="@+id/button_rotate"
+            android:background="@mipmap/ic_rotate"
+            android:clickable="true"
+            android:layout_gravity="left"
+            android:adjustViewBounds="false"
+            android:layout_marginLeft="166dp"/>
 
         <TextView
             android:layout_row="0"
@@ -94,14 +107,14 @@
             android:textColor="@android:color/background_light" />
 
         <ImageView
-            android:layout_columnSpan="2"
+            android:id="@+id/imgView"
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
-            android:id="@+id/imgView"
-            app:srcCompat="@drawable/start"
+            android:layout_columnSpan="2"
+            android:layout_marginBottom="50dp"
             android:adjustViewBounds="false"
             android:cropToPadding="false"
-            android:layout_marginBottom="50dp" />
+            app:srcCompat="@drawable/start" />
     </GridLayout>
 
 </RelativeLayout>

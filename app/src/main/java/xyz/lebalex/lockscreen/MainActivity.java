@@ -39,6 +39,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -590,6 +591,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         ImageButton imageButton;
         ImageButton imageButtonBack;
         ImageButton imageButtonResize;
+        ImageButton imageButtonRotate;
         ImageButton imageButtonPlus;
         ImageButton imageButtonCheck;
         ImageView mImageView;
@@ -765,7 +767,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                     canvas.drawBitmap(bitMap, new Matrix(), null);
                                     Paint p = new Paint();
                                     p.setColor(Color.BLACK);
-                                    p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
+                                    p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "150")));
                                     canvas.drawRect(0,0,bitMap.getWidth(),bitMap.getHeight(),p);
 
 
@@ -869,6 +871,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             imageButtonResize = (ImageButton) rootView.findViewById(R.id.button_resize);
             imageButtonPlus = (ImageButton) rootView.findViewById(R.id.button_plus);
             imageButtonCheck = (ImageButton) rootView.findViewById(R.id.button_check);
+            imageButtonRotate = (ImageButton) rootView.findViewById(R.id.button_rotate);
 
             //sp = PreferenceManager.getDefaultSharedPreferences(appContext);
 
@@ -1035,6 +1038,19 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         textView.setText("Plus");
                         //Toast.makeText(appContext, bitmap.getWidth()+"-"+bitmap.getHeight(), Toast.LENGTH_SHORT).show();
 
+                    } catch (Exception e) {
+
+                    }
+                }
+            });
+            imageButtonRotate.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    try {
+                        Matrix matrix = new Matrix();
+                        matrix.postRotate(90);
+                        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                        setImageToView(bitmap);
+                        textView.setText("Rotate");
                     } catch (Exception e) {
 
                     }

@@ -112,7 +112,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                 canvas.drawBitmap(bmp, new Matrix(), null);
                 Paint p = new Paint();
                 p.setColor(Color.BLACK);
-                p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
+                p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "150")));
                 canvas.drawRect(0,0,bmp.getWidth(),bmp.getHeight(),p);
 
                 WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
