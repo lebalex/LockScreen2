@@ -3,6 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="xyz.lebalex.lockscreen.MainActivity">
     <item
+        android:id="@+id/action_lic"
+        android:orderInCategory="100"
+        android:title="@string/action_lic"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_reload"
         android:orderInCategory="100"
         android:title="@string/action_reload"
@@ -23,5 +28,11 @@
         android:orderInCategory="100"
         android:title="@string/action_restart_service"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_share_to"
+        android:orderInCategory="100"
+        android:title="@string/send_to"
+        app:showAsAction="never" />
+
 
 </menu>

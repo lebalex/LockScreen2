@@ -4,21 +4,26 @@ import android.app.IntentService;
 
 
 import android.app.WallpaperManager;
+import android.app.enterprise.lso.LockscreenOverlay;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
+import android.widget.Toast;
 
 
 import com.google.android.gms.common.ConnectionResult;
@@ -106,24 +111,23 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                     source_load_value=1;
             }
             if (bmp != null) {
-
-                Bitmap bmOverlay = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());
-                Canvas canvas = new Canvas(bmOverlay);
-                canvas.drawBitmap(bmp, new Matrix(), null);
-                Paint p = new Paint();
-                p.setColor(Color.BLACK);
-                p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "150")));
-                canvas.drawRect(0,0,bmp.getWidth(),bmp.getHeight(),p);
-
+                Bitmap bmOverlay = setAlpha(bmp, Integer.parseInt(sp.getString("alpha_value", "150")));
                 WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
-                wallpaperManager.clear();
-                /*if (sp.getBoolean("flag_wall", true)) {
-                    wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_SYSTEM);
-                    wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);
-                } else
-                    wallpaperManager.setBitmap(bmp, null, true, WallpaperManager.FLAG_LOCK);*/
-                wallpaperManager.setBitmap(bmOverlay);
 
+                /*android 7*/
+                /*if (sp.getBoolean("flag_wall", true)) {
+                    wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_SYSTEM);
+                    wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
+                } else
+                    wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
+*/
+
+                /*android 6*/
+                if (sp.getBoolean("flag_wall", true)) {
+                    wallpaperManager.clear();
+                    wallpaperManager.setBitmap(bmOverlay);
+                }
+                setSamsungWall(bmOverlay);
                 LogWrite.Log(context, "Set Wallpaper");
             }
 
@@ -132,6 +136,58 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
         } finally {
             wl.release();
             LockScreenServiceReceiver.completeWakefulIntent(intent);
+        }
+    }
+    private Bitmap setAlpha(Bitmap bmp, int alpha)
+    {
+        Bitmap bmOverlay = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());
+        Canvas canvas = new Canvas(bmOverlay);
+        canvas.drawBitmap(bmp, new Matrix(), null);
+        Paint p = new Paint();
+        p.setColor(Color.BLACK);
+        p.setAlpha(alpha);
+        canvas.drawRect(0,0,bmp.getWidth(),bmp.getHeight(),p);
+        return bmOverlay;
+    }
+    private void deleteFilePic(String path)
+    {
+        try {
+            File file = new File(path);
+            file.delete();
+        }catch(Exception e)
+        {
+            LogWrite.Log(context, "delete error: "+e.getMessage());
+        }
+    }
+    private void setSamsungWall(Bitmap bmOverlay)
+    {
+        String bitmapPath = MediaStore.Images.Media.insertImage(this.getContentResolver(), bmOverlay, "title", null);
+        Uri bitmapUri = Uri.parse(bitmapPath);
+        String realPath = getRealPathFromURI(this, bitmapUri);
+
+        LockscreenOverlay lso = LockscreenOverlay.getInstance(this);
+
+        if (lso.canConfigure()) {
+
+            int result = lso.setWallpaper(realPath);
+
+            if (LockscreenOverlay.ERROR_NONE != result) {
+                String a="";
+                switch(result)
+                {
+                    case LockscreenOverlay.ERROR_BAD_STATE:a="ERROR_BAD_STATE";break;
+                    case LockscreenOverlay.ERROR_FAILED:a="ERROR_FAILED";break;
+                    case LockscreenOverlay.ERROR_NOT_ALLOWED:a="ERROR_NOT_ALLOWED";break;
+                    case LockscreenOverlay.ERROR_NOT_READY:a="ERROR_NOT_READY";break;
+                    case LockscreenOverlay.ERROR_NOT_SUPPORTED:a="ERROR_NOT_SUPPORTED";break;
+                    case LockscreenOverlay.ERROR_PERMISSION_DENIED:a="ERROR_PERMISSION_DENIED";break;
+                    case LockscreenOverlay.ERROR_UNKNOWN:a="ERROR_UNKNOWN";break;
+                }
+                LogWrite.Log(context,  a);
+            }
+            deleteFilePic(realPath);
+        } else {
+            LogWrite.Log(context,  "Administrator cannot customize lock screen");
         }
     }
 
@@ -394,17 +450,26 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                         if (bitmap != null) {
                             WallpaperManager wallpaperManager = WallpaperManager
                                     .getInstance(context);
-                            wallpaperManager.clear();
+
 
                             bitmap = imageForScreen(bitmap);
                             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-                            /*if (sp.getBoolean("flag_wall", true)) {
-                                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_SYSTEM);
-                                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);
+                            Bitmap bmOverlay = setAlpha(bitmap, Integer.parseInt(sp.getString("alpha_value", "150")));
+                            /*android 7*/
+                           /* if (sp.getBoolean("flag_wall", true)) {
+                                wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_SYSTEM);
+                                wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
                             } else
-                                wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK);*/
-                            wallpaperManager.setBitmap(bitmap);
+                                wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
+*/
 
+                            /*android 6*/
+                            if (sp.getBoolean("flag_wall", true)){
+                                wallpaperManager.clear();
+                                wallpaperManager.setBitmap(bmOverlay);
+                            }
+
+                            setSamsungWall(bmOverlay);
                             LogWrite.Log(context, "Google set Wallpaper");
                         }else
                             LogWrite.Log(context, "Google bitmap == null");
@@ -416,4 +481,18 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
 
                 }
             };
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
 }

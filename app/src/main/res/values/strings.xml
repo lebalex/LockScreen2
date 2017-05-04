@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">LockScreen</string>
+    <string name="action_lic">License</string>
     <string name="action_reload">Reload</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_settings">Settings</string>
+
+    <string name="about_app">About App</string>
+
 
     <!-- Strings related to Settings -->
 
@@ -18,8 +22,10 @@
     <string name="flag_wall_Title">LOCK or SYSTEM</string>
     <string name="save_log_Title">Save log</string>
     <string name="home_Title">Home pictures</string>
-<string name="action_logs">Logs</string>
+    <string name="action_logs">Logs</string>
     <string name="action_restart_service">Restart Service</string>
+    <string name="send_to">Send to</string>
+
 
     <string name="pref_title_update_start">Start update</string>
     <string name="pref_title_alpha_value">Alpha value</string>
@@ -99,4 +105,37 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
+
+    <!-- License Error Code -->
+    <string name="err_internal">Internal error</string>
+    <string name="err_internal_server">Internal server error</string>
+    <string name="err_licence_invalid_license">Invalid license</string>
+    <string name="err_invalid_package_name">Invalid package name</string>
+    <string name="err_licence_terminated">License terminated</string>
+    <string name="err_network_disconnected">Network disconnected</string>
+    <string name="err_network_general">Network general error</string>
+    <string name="err_unknown">Error unknown</string>
+    <string name="err_not_current_date">Not current date</string>
+    <string name="err_null_params">NULL params</string>
+    <string name="err_user_disagrees_license_agreement">User disagrees EULA</string>
+
+    <string name="not_supported_sdk">This device does not support ELM activation API and hence this app will not work on it</string>
+    <string name="ok">OK</string>
+    <!-- Admin and License activation constants -->
+    <string name="device_admin_heading">Device Administration</string>
+    <string name="enable_admin">Enable Admin</string>
+    <string name="disable_admin">Disable Admin</string>
+    <string name="device_admin_enabled">Device admin enabled</string>
+    <string name="device_admin_disabled">Device admin disabled</string>
+    <string name="license_activation">License Activation</string>
+    <string name="activate_elm">Activate ELM</string>
+    <string name="disable_admin_confirmation">Do you want to disable device administrator?</string>
+    <string name="elm_activated_successfully">ELM activated successfully</string>
+    <string name="insert_elm_key">Please insert ELM key in the code in variable SAConstants.ELM_KEY</string>
+    <string name="insert_elm_key_heading">Insert ELM key</string>
+    <!-- Exception Messages -->
+    <string name="admin_activity_not_found">"ActivityNotFoundException: Device admin addition activity is not found"</string>
+    <string name="non_owner_admin_removal_exception">"SecurityException: This app attempts to remove an active admin not owned by it"</string>
+    <string name="security_exception">SecurityException: The caller does not have required permission</string>
+
 </resources>

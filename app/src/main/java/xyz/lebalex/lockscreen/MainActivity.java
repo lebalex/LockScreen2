@@ -4,12 +4,18 @@ package xyz.lebalex.lockscreen;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.WallpaperManager;
+import android.app.admin.DevicePolicyManager;
+import android.app.enterprise.license.EnterpriseLicenseManager;
+import android.app.enterprise.lso.LockscreenOverlay;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -75,6 +81,7 @@ import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
+import com.sec.enterprise.knox.license.KnoxEnterpriseLicenseManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -122,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     private static Bitmap mBitmapToSave;
     private static ImageView mDmImageView;
     private static TextView mDmTextView;
+    private static String googleLoadFileName;
     private static ImageButton mDmImageButton;
     private static String originalUrlTemp;
     private static List<String> historyUrl = new ArrayList<String>();
@@ -137,6 +145,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     private static GoogleApiClient mGoogleApiClient;
 
     private static SharedPreferences sp;
+
+    private DevicePolicyManager mDPM;
+    private ComponentName mCN;
 
 
     public void saveFileToDrive() {
@@ -359,28 +370,20 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 @Override
                 public void onResult(DriveApi.MetadataBufferResult result) {
                     if (!result.getStatus().isSuccess()) {
-                        //showMessage("Problem while retrieving files");
                         return;
                     }
                     MetadataBuffer aaa = result.getMetadataBuffer();
-                    /*for(int i=0;i<aaa.getCount();i++)
-                    {
-                        Log.i("MyServiceGoole", aaa.get(i).getTitle());
-
-                    }
-                    Log.i("MyServiceGoole", aaa.getCount()+"");*/
 
                     if (aaa.getCount() > 0) {
                         Random rnd = new Random();
                         int idx = rnd.nextInt(aaa.getCount() - 1);
 
-                        mDmTextView.setText(aaa.get(idx).getTitle());
+                        googleLoadFileName = aaa.get(idx).getTitle();
                         DriveFile file = Drive.DriveApi.getFile(mGoogleApiClient,
                                 aaa.get(idx).getDriveId());
                         file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, null)
                                 .setResultCallback(contentsOpenedCallback);
-                    }/*else
-                        Log.i("MyServiceGoole", aaa.getCount()+" нет файлов");*/
+                    }
 
                 }
             };
@@ -400,6 +403,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         bitmap = BitmapFactory.decodeStream(is);
                         //Log.i("MyServiceGoole", "Bitmap");
                         if (bitmap != null) {
+                            mDmImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                             mDmImageView.setDrawingCacheEnabled(false);
                             mDmImageView.setImageBitmap(bitmap);
                             mDmImageView.setDrawingCacheEnabled(true);
@@ -411,6 +415,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                             mDmImageView.setEnabled(true);
                             mDmImageView.setAlpha(1F);
                             //Log.i("MyServiceGoole", "Set");
+
+                            PlaceholderFragment frag = (PlaceholderFragment) mViewPager.getAdapter().instantiateItem(mViewPager, mViewPager.getCurrentItem());
+                            frag.setBitMap(bitmap);
+                            frag.setTextLabel(googleLoadFileName);
+
                         }
 
                     } catch (Exception e3) {
@@ -447,8 +456,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
 
         checkPermision();
-
-
         sp = PreferenceManager.getDefaultSharedPreferences(this);
 
         if (!sp.getBoolean("start_service", false)) {
@@ -457,6 +464,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             LogWrite.Log(this, "start APP, interval = " + interval / 1000 / 60);
             startBackgroundService(interval, startTime);
         }
+
 
     }
 
@@ -477,8 +485,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
             boolean find = false;
             while (!find) {
-                //String a1 = curentTime.get(Calendar.YEAR)+"-"+curentTime.get(Calendar.MONTH)+"-"+curentTime.get(Calendar.DATE)+" "+curentTime.get(Calendar.HOUR_OF_DAY)+":"+curentTime.get(Calendar.MINUTE)+":"+curentTime.get(Calendar.SECOND);
-                //String a2 = startCalen.get(Calendar.YEAR)+"-"+startCalen.get(Calendar.MONTH)+"-"+startCalen.get(Calendar.DATE)+" "+startCalen.get(Calendar.HOUR_OF_DAY)+":"+startCalen.get(Calendar.MINUTE)+":"+startCalen.get(Calendar.SECOND);
                 if (curentTime.before(startCalen))
                     find = true;
                 else
@@ -554,6 +560,12 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             startActivity(i);
             return true;
         }
+        if (id == R.id.action_lic) {
+            //SettingsActivity.actionTo(this);
+            Intent i = new Intent(this, AdminLicenseActivation.class);
+            startActivity(i);
+            return true;
+        }
         if (id == R.id.action_reload) {
             PlaceholderFragment frag = (PlaceholderFragment) mViewPager.getAdapter().instantiateItem(mViewPager, mViewPager.getCurrentItem());
             frag.reloadImage(historyUrl.get(indexUrl - 1));
@@ -570,6 +582,13 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             int startTime = Integer.parseInt(sp.getString("update_start", "0"));
             LogWrite.Log(this, "--restart APP, interval = " + interval / 1000 / 60);
             startBackgroundService(interval, startTime);
+            PlaceholderFragment frag = (PlaceholderFragment) mViewPager.getAdapter().instantiateItem(mViewPager, mViewPager.getCurrentItem());
+            frag.setTextLabel("restart APP");
+            return true;
+        }
+        if (id == R.id.action_share_to) {
+            PlaceholderFragment frag = (PlaceholderFragment) mViewPager.getAdapter().instantiateItem(mViewPager, mViewPager.getCurrentItem());
+            frag.sendToImage();
             return true;
         }
 
@@ -592,6 +611,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         ImageButton imageButtonBack;
         ImageButton imageButtonResize;
         ImageButton imageButtonRotate;
+        ImageButton imageButtonMirror;
+        ImageButton imageButtonWallSystem;
         ImageButton imageButtonPlus;
         ImageButton imageButtonCheck;
         ImageView mImageView;
@@ -606,7 +627,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         //private PendingIntent pendingIntent;
         //private AlarmManager manager;
 
-        private int indd = 0;
+        private String fileNameforWall;
 
 
         public PlaceholderFragment() {
@@ -626,16 +647,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         private void setImageToView(Bitmap bitmap) {
 
-            /*Bitmap bmOverlay = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
-            Canvas canvas = new Canvas(bmOverlay);
-            canvas.drawBitmap(bitmap, new Matrix(), null);
-            Paint p = new Paint();
-            p.setColor(Color.BLACK);
-            p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
-            canvas.drawRect(0,0,mImageView.getWidth(),mImageView.getHeight(),p);*/
-
-
-
             mImageView.invalidate();
             mImageView.setScrollX(0);
             mImageView.setScrollY(0);
@@ -645,16 +656,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             mImageView.setDrawingCacheEnabled(true);
             mImageView.buildDrawingCache();
 
-            /*Bitmap bmp = Bitmap.createBitmap(mImageView.getWidth(), mImageView.getHeight(), Bitmap.Config.ARGB_8888);
-            Canvas c = new Canvas(bmp);
-            mImageView.draw(c);
-
-            Paint p = new Paint();
-            p.setColor(Color.BLACK);
-            p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
-            c.drawRect(0,0,mImageView.getWidth(),mImageView.getHeight(),p);
-
-            mImageView.setImageBitmap(bmp);*/
 
         }
 
@@ -695,21 +696,12 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         mImageView.post(new Runnable() {
                             public void run() {
                                 if (bitmap != null) {
-
-
-                                    //float scale = (xScale <= yScale) ? xScale : yScale;
-
                                     android.graphics.Matrix matrix = new android.graphics.Matrix();
                                     mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                                     setImageToView(bitmap);
-
-                                    //Log.i("Width", ""+bitmap.getWidth());
-                                    //Log.i("Height", ""+bitmap.getHeight());
-
                                     textView.setText(urlName);
                                     historyUrl.add(originalUrlTemp);
                                     indexUrl = historyUrl.size();
-                                    //Toast.makeText(appContext, bitmap.getWidth()+"-"+bitmap.getHeight(), Toast.LENGTH_SHORT).show();
                                 } else {
                                     if (errorLoadBmp.length() == 0) textView.setText("error");
                                     else
@@ -733,6 +725,10 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         }
 
+        public void setBitMap(Bitmap b) {
+            bitmap = b;
+        }
+
         private void setWall() {
             textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText("set ...");
@@ -746,42 +742,37 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         public void run() {
                             try {
 
-                                /*Bitmap bmp = Bitmap.createBitmap(mImageView.getWidth(), mImageView.getHeight(), Bitmap.Config.ARGB_8888);
-                                Canvas c = new Canvas(bmp);
-                                mImageView.draw(c);
-
-                                Paint p = new Paint();
-                                p.setColor(Color.BLACK);
-                                p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "0")));
-                                c.drawRect(0,0,mImageView.getWidth(),mImageView.getHeight(),p);
-
-                                mImageView.setImageBitmap(bmp);*/
-
-
                                 Bitmap bitMap = null;
                                 bitMap = mImageView.getDrawingCache(true);
                                 if (bitMap != null) {
 
-                                    Bitmap bmOverlay = Bitmap.createBitmap(bitMap.getWidth(), bitMap.getHeight(), bitMap.getConfig());
-                                    Canvas canvas = new Canvas(bmOverlay);
-                                    canvas.drawBitmap(bitMap, new Matrix(), null);
-                                    Paint p = new Paint();
-                                    p.setColor(Color.BLACK);
-                                    p.setAlpha(Integer.parseInt(sp.getString("alpha_value", "150")));
-                                    canvas.drawRect(0,0,bitMap.getWidth(),bitMap.getHeight(),p);
+                                    Bitmap bmOverlay = setAlpha(bitMap, Integer.parseInt(sp.getString("alpha_value", "150")));
 
-
-                                    WallpaperManager wallpaperManager = WallpaperManager
+                                 /*android 7*/
+                                    /*WallpaperManager wallpaperManager = WallpaperManager
                                             .getInstance(appContext);
 
-                                    wallpaperManager.clear();
-
-                                    /*if (sp.getBoolean("flag_wall", true)) {
-                                        wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_SYSTEM);
-                                        wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);
+                                    if (sp.getBoolean("flag_wall", true)) {
+                                        wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_SYSTEM);
+                                        wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
                                     } else
-                                        wallpaperManager.setBitmap(bitMap, null, true, WallpaperManager.FLAG_LOCK);*/
-                                    wallpaperManager.setBitmap(bmOverlay);
+                                        wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
+*/
+
+
+                                    /*android 6*/
+                                    String bitmapPath = MediaStore.Images.Media.insertImage(appContext.getContentResolver(), bmOverlay, "title", null);
+                                    Uri bitmapUri = Uri.parse(bitmapPath);
+                                    fileNameforWall = getRealPathFromURI(appContext, bitmapUri);
+                                    if (sp.getBoolean("flag_wall", true)) {
+                                        Intent intent = new Intent(WallpaperManager.ACTION_CROP_AND_SET_WALLPAPER);
+                                        String mime = "image/*";
+                                        intent.setDataAndType(bitmapUri, mime);
+                                        startActivityForResult(intent, 11);
+                                    }
+                                    setSamsungWall(fileNameforWall);
+
+
 
                                 }
                                 textView.setText("set Wallpaper");
@@ -789,7 +780,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                 mImageView.setAlpha(1F);
                             } catch (Exception e1) {
                                 textView.setText("error");
-                                Toast.makeText(appContext, e1.getMessage(), Toast.LENGTH_LONG).show();
+                                Toast.makeText(appContext, "error: " + e1.getMessage(), Toast.LENGTH_LONG).show();
                             }
                         }
                     });
@@ -799,6 +790,83 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             }).start();
 
 
+        }
+
+        private void deleteFile(String path) {
+            try {
+                File file = new File(path);
+                file.delete();
+            } catch (Exception e) {
+                Toast.makeText(appContext, "delete error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
+
+        private Bitmap setAlpha(Bitmap bmp, int alpha) {
+            Bitmap bmOverlay = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());
+            Canvas canvas = new Canvas(bmOverlay);
+            canvas.drawBitmap(bmp, new Matrix(), null);
+            Paint p = new Paint();
+            p.setColor(Color.BLACK);
+            p.setAlpha(alpha);
+            canvas.drawRect(0, 0, bmp.getWidth(), bmp.getHeight(), p);
+            return bmOverlay;
+        }
+
+        private void setSamsungWall(String bitmapUri) {
+            LockscreenOverlay lso = LockscreenOverlay.getInstance(appContext);
+
+            if (lso.canConfigure()) {
+                int result = lso.setWallpaper(bitmapUri);
+
+                if (LockscreenOverlay.ERROR_NONE != result) {
+                    String a = "";
+                    switch (result) {
+                        case LockscreenOverlay.ERROR_BAD_STATE:
+                            a = "ERROR_BAD_STATE";
+                            break;
+                        case LockscreenOverlay.ERROR_FAILED:
+                            a = "ERROR_FAILED";
+                            break;
+                        case LockscreenOverlay.ERROR_NOT_ALLOWED:
+                            a = "ERROR_NOT_ALLOWED";
+                            break;
+                        case LockscreenOverlay.ERROR_NOT_READY:
+                            a = "ERROR_NOT_READY";
+                            break;
+                        case LockscreenOverlay.ERROR_NOT_SUPPORTED:
+                            a = "ERROR_NOT_SUPPORTED";
+                            break;
+                        case LockscreenOverlay.ERROR_PERMISSION_DENIED:
+                            a = "ERROR_PERMISSION_DENIED";
+                            break;
+                        case LockscreenOverlay.ERROR_UNKNOWN:
+                            a = "ERROR_UNKNOWN";
+                            break;
+                    }
+                    Toast.makeText(appContext, a, Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(appContext, "Administrator cannot customize lock screen", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        public String getRealPathFromURI(Context context, Uri contentUri) {
+            Cursor cursor = null;
+            try {
+                String[] proj = {MediaStore.Images.Media.DATA};
+                cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                cursor.moveToFirst();
+                return cursor.getString(column_index);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+
+        public void setTextLabel(String text) {
+            textView.setText(text);
         }
 
         private Bitmap imageForScreen(Bitmap bitmap) {
@@ -858,6 +926,30 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             }
         }
 
+        private void sendToImage() {
+            try {
+                String bitmapPath = MediaStore.Images.Media.insertImage(appContext.getContentResolver(), bitmap, "title", null);
+                Uri bitmapUri = Uri.parse(bitmapPath);
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, bitmapUri);
+                shareIntent.setType("image/jpeg");
+                startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.send_to)));
+            } catch (Exception e) {
+
+            }
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            if (requestCode == 11) {
+                deleteFile(fileNameforWall);
+                try {
+                    if (textView != null) textView.setText("set Wallpaper");
+                } catch (Exception e) {
+                }
+            }
+        }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -872,7 +964,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             imageButtonPlus = (ImageButton) rootView.findViewById(R.id.button_plus);
             imageButtonCheck = (ImageButton) rootView.findViewById(R.id.button_check);
             imageButtonRotate = (ImageButton) rootView.findViewById(R.id.button_rotate);
-
+            imageButtonMirror = (ImageButton) rootView.findViewById(R.id.button_mirror);
+            imageButtonWallSystem = (ImageButton) rootView.findViewById(R.id.button_setwallsystem);
             //sp = PreferenceManager.getDefaultSharedPreferences(appContext);
 
             textView.setOnClickListener(new View.OnClickListener() {
@@ -946,7 +1039,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         @Override
                         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
                                                float velocityY) {
-                            Log.i("fling", "onFling has been called!");
+                            //Log.i("fling", "onFling has been called!");
                             final int SWIPE_MIN_DISTANCE = 120;
                             try {
                                 //scrolX=0;scrolY=0;
@@ -1056,6 +1149,77 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     }
                 }
             });
+            imageButtonMirror.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    try {
+                        Matrix matrix = new Matrix();
+                        matrix.setScale(-1, 1);
+                        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+                        bitmap.setDensity(DisplayMetrics.DENSITY_DEFAULT);
+
+                        setImageToView(bitmap);
+                        textView.setText("Rotate");
+                    } catch (Exception e) {
+
+                    }
+                }
+            });
+            imageButtonWallSystem.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    textView = (TextView) rootView.findViewById(R.id.section_label);
+                    try {
+                        Bitmap bitMap = mImageView.getDrawingCache(true);
+                        if (bitMap != null) {
+
+                            Bitmap bmOverlay = setAlpha(bitMap, Integer.parseInt(sp.getString("alpha_value", "150")));
+                            String bitmapPath = MediaStore.Images.Media.insertImage(appContext.getContentResolver(), bmOverlay, "title", null);
+                            Uri bitmapUri = Uri.parse(bitmapPath);
+                            fileNameforWall = getRealPathFromURI(appContext, bitmapUri);
+                            Intent intent = new Intent(WallpaperManager.ACTION_CROP_AND_SET_WALLPAPER);
+                            String mime = "image/*";
+                            intent.setDataAndType(bitmapUri, mime);
+                            startActivityForResult(intent, 11);
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(appContext, "error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+/*            imageButtonWallSystem.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    textView = (TextView) rootView.findViewById(R.id.section_label);
+                    textView.setText("set ...");
+                    mImageView.setEnabled(false);
+                    mImageView.setAlpha(0.5F);
+                    new Thread(new Runnable() {
+                        public void run() {
+                            handler.post(new Runnable() {
+                                public void run() {
+                                    try {
+                                        Bitmap bitMap = mImageView.getDrawingCache(true);
+                                        if (bitMap != null) {
+
+                                            Bitmap bmOverlay = setAlpha(bitMap, Integer.parseInt(sp.getString("alpha_value", "150")));
+
+                                            WallpaperManager wallpaperManager = WallpaperManager
+                                                    .getInstance(appContext);
+                                            wallpaperManager.setBitmap(bmOverlay);
+
+                                            textView.setText("set Wallpaper");
+                                            mImageView.setEnabled(true);
+                                            mImageView.setAlpha(1F);
+                                        }
+                                    } catch (Exception e) {
+                                        textView.setText("error");
+                                        Toast.makeText(appContext, "error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            });
+                        }
+                    }).start();
+                }
+            });
+*/
 
             imageButtonCheck.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
