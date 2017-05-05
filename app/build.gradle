@@ -5,7 +5,7 @@ android {
         config {
             keyAlias 'LebalexAndroidKey'
             keyPassword 'ySjdy27op'
-            storeFile file('D:/Alexander/AndroidPrg/android.jks')
+            storeFile file('D:/Work/android.jks')
             storePassword 'ySjdy27op'
         }
     }
@@ -13,10 +13,10 @@ android {
     buildToolsVersion '25.0.0'
     defaultConfig {
         applicationId "xyz.lebalex.lockscreen"
-        minSdkVersion 24
+        minSdkVersion 23
         targetSdkVersion 24
         versionCode 1
-        versionName "1.7.33"
+        versionName "1.6.35"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
         signingConfig signingConfigs.config

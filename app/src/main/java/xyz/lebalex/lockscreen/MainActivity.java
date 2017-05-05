@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     private static List<String> historyUrl = new ArrayList<String>();
     private static int indexUrl = 0;
     private static boolean saveGoogleDrive = false;
+    private static int moveFinger=0;
 
     private static final int REQUEST_CODE_CAPTURE_IMAGE = 1;
     private static final int REQUEST_CODE_CREATOR = 2;
@@ -148,6 +149,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     private DevicePolicyManager mDPM;
     private ComponentName mCN;
+
+    private static MetadataBuffer searchFiles = null;
+    private static int idxG=0;
 
 
     public void saveFileToDrive() {
@@ -285,8 +289,16 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         }
         if (saveGoogleDrive)
             saveFileToDrive();
-        else
-            loadImageFromGoogleDrive();
+        else {
+            if(searchFiles==null)
+                loadImageFromGoogleDrive();
+            else {
+                if(moveFinger==-1)
+                    loadImageFromGoogleDriveNext();
+                else
+                    loadImageFromGoogleDrivePrev();
+            }
+        }
     }
 
     @Override
@@ -372,21 +384,67 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     if (!result.getStatus().isSuccess()) {
                         return;
                     }
-                    MetadataBuffer aaa = result.getMetadataBuffer();
+                    searchFiles = result.getMetadataBuffer();
 
-                    if (aaa.getCount() > 0) {
+
+                    if (searchFiles.getCount() > 0) {
                         Random rnd = new Random();
-                        int idx = rnd.nextInt(aaa.getCount() - 1);
+                        int idx = rnd.nextInt(searchFiles.getCount() - 1);
+                        idxG = idx;
 
-                        googleLoadFileName = aaa.get(idx).getTitle();
+                        googleLoadFileName = searchFiles.get(idx).getTitle();
                         DriveFile file = Drive.DriveApi.getFile(mGoogleApiClient,
-                                aaa.get(idx).getDriveId());
+                                searchFiles.get(idx).getDriveId());
                         file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, null)
                                 .setResultCallback(contentsOpenedCallback);
                     }
 
                 }
             };
+    public void loadImageFromGoogleDriveNext() {
+
+        try {
+            if (searchFiles.getCount() > 0) {
+                /*Random rnd = new Random();
+                int idx = rnd.nextInt(searchFiles.getCount() - 1);*/
+                if(idxG==searchFiles.getCount()) idxG=0;
+                else
+                    idxG++;
+
+                googleLoadFileName = searchFiles.get(idxG).getTitle();
+                DriveFile file = Drive.DriveApi.getFile(mGoogleApiClient,
+                        searchFiles.get(idxG).getDriveId());
+                file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, null)
+                        .setResultCallback(contentsOpenedCallback);
+            }
+
+        } catch (Exception e) {
+
+        }
+
+    }
+    public void loadImageFromGoogleDrivePrev() {
+
+        try {
+            if (searchFiles.getCount() > 0) {
+                /*Random rnd = new Random();
+                int idx = rnd.nextInt(searchFiles.getCount() - 1);*/
+                if(idxG==0) idxG=searchFiles.getCount()-1;
+                else
+                    idxG--;
+
+                googleLoadFileName = searchFiles.get(idxG).getTitle();
+                DriveFile file = Drive.DriveApi.getFile(mGoogleApiClient,
+                        searchFiles.get(idxG).getDriveId());
+                file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, null)
+                        .setResultCallback(contentsOpenedCallback);
+            }
+
+        } catch (Exception e) {
+
+        }
+
+    }
     ResultCallback<DriveApi.DriveContentsResult> contentsOpenedCallback =
             new ResultCallback<DriveApi.DriveContentsResult>() {
                 @Override
@@ -1050,10 +1108,12 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                         //Log.i("fling", "down");
                                         //imageButton.callOnClick();
 
+                                        moveFinger=-1;
                                         loadDate();
                                     } else if (e1.getY() - e2.getY() > SWIPE_MIN_DISTANCE) {
                                         //Log.i("fling", "up");
                                         //imageButton.callOnClick();
+                                        moveFinger=1;
                                         loadDate();
                                     }
                                 } else {
