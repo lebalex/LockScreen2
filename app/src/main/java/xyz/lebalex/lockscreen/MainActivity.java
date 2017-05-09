@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     public void saveFileToDrive() {
         // Start by creating a new contents, and setting a callback.
-        Log.i(TAG, "Creating new contents.");
+        //Log.i(TAG, "Creating new contents.");
         final Bitmap image = mBitmapToSave;
         mDmImageView.setEnabled(false);
         mDmImageView.setAlpha(0.5F);
@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     final DriveContents driveContents = result.getDriveContents();
 
                     // Otherwise, we can write our data to the new contents.
-                    Log.i(TAG, "New contents created.");
+                    //Log.i(TAG, "New contents created.");
                     // Get an output stream for the contents.
                     OutputStream outputStream = result.getDriveContents().getOutputStream();
                     // Write the bitmap data from it.
@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     try {
                         outputStream.write(bitmapStream.toByteArray());
                     } catch (IOException e1) {
-                        Log.i(TAG, "Unable to write file contents.");
+                        //Log.i(TAG, "Unable to write file contents.");
                     }
                     // Create the initial metadata - MIME type and title.
                     // Note that the user will be able to change the title later.
@@ -193,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
 
                     try {
-                        Log.i(TAG, "Query.Builder");
+                        //Log.i(TAG, "Query.Builder");
                         /*DriveFolder driveFolder = Drive.DriveApi.getRootFolder(mGoogleApiClient);
                         driveFolder.listChildren(mGoogleApiClient).setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
                                     @Override
@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                                                                                     DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
                                                                                                     java.util.Calendar c = java.util.Calendar.getInstance();
                                                                                                     MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                                                                                                            .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + (c.get(java.util.Calendar.MONTH) + 1) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".png").build();
+                                                                                                            .setMimeType("image/jpeg").setTitle("image" + c.get(java.util.Calendar.YEAR) + (c.get(java.util.Calendar.MONTH) + 1) + c.get(java.util.Calendar.DATE) + c.get(java.util.Calendar.HOUR_OF_DAY) + c.get(java.util.Calendar.MINUTE) + c.get(java.util.Calendar.SECOND) + ".jpg").build();
 
                                                                                                     folder.createFile(mGoogleApiClient, metadataChangeSet, driveContents)
                                                                                                             .setResultCallback(fileCallback);
@@ -293,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             if(searchFiles==null)
                 loadImageFromGoogleDrive();
             else {
-                if(moveFinger==-1)
+                if(moveFinger==1)
                     loadImageFromGoogleDriveNext();
                 else
                     loadImageFromGoogleDrivePrev();
@@ -303,7 +303,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     @Override
     public void onConnectionSuspended(int cause) {
-        Log.i(TAG, "GoogleApiClient connection suspended");
+        //Log.i(TAG, "GoogleApiClient connection suspended");
     }
 
 
@@ -319,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         try {
             result.startResolutionForResult(this, REQUEST_CODE_RESOLUTION);
         } catch (Exception e) {
-            Log.e(TAG, "Exception while starting resolution activity", e);
+            //Log.e(TAG, "Exception while starting resolution activity", e);
         }
     }
 
@@ -359,10 +359,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                                                                                     return;
                                                                                                 }
                                                                                                 MetadataBuffer aaa = result.getMetadataBuffer();
-                                                                                                //Log.i("MyServiceGoole",aaa.getCount()+"");
+
                                                                                                 if (aaa.getCount() > 0) {
                                                                                                     //Log.i("MyServiceGoole",aaa.get(0).getTitle());
                                                                                                     DriveId sFolderId = aaa.get(0).getDriveId();
+                                                                                                    LogWrite.Log(appContext, "sFolderId = " + aaa.get(0).getTitle());
                                                                                                     DriveFolder folder = Drive.DriveApi.getFolder(mGoogleApiClient, sFolderId);
                                                                                                     folder.listChildren(mGoogleApiClient).setResultCallback(childrenRetrievedCallback);
                                                                                                 }
@@ -372,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                     } catch (Exception edr) {
                         //Toast.makeText(appContext, edr.getMessage(), Toast.LENGTH_SHORT).show();
-                        Log.e("MyServiceGoole", "Exception edr", edr);
+                        //Log.e("MyServiceGoole", "Exception edr", edr);
                     }
 
                 }
@@ -381,22 +382,25 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             ResultCallback<DriveApi.MetadataBufferResult>() {
                 @Override
                 public void onResult(DriveApi.MetadataBufferResult result) {
-                    if (!result.getStatus().isSuccess()) {
-                        return;
-                    }
-                    searchFiles = result.getMetadataBuffer();
+                    try {
+                        if (!result.getStatus().isSuccess()) {
+                            return;
+                        }
+                        searchFiles = result.getMetadataBuffer();
+                        LogWrite.Log(appContext, "searchFiles = " + searchFiles.getCount());
 
+                        if (searchFiles.getCount() > 0) {
+                            Random rnd = new Random();
+                            idxG = rnd.nextInt(searchFiles.getCount() - 1);
 
-                    if (searchFiles.getCount() > 0) {
-                        Random rnd = new Random();
-                        int idx = rnd.nextInt(searchFiles.getCount() - 1);
-                        idxG = idx;
-
-                        googleLoadFileName = searchFiles.get(idx).getTitle();
-                        DriveFile file = Drive.DriveApi.getFile(mGoogleApiClient,
-                                searchFiles.get(idx).getDriveId());
-                        file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, null)
-                                .setResultCallback(contentsOpenedCallback);
+                            googleLoadFileName = searchFiles.get(idxG).getTitle();
+                            DriveFile file = Drive.DriveApi.getFile(mGoogleApiClient,
+                                    searchFiles.get(idxG).getDriveId());
+                            file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, null)
+                                    .setResultCallback(contentsOpenedCallback);
+                        }
+                    }catch(Exception e) {
+                        LogWrite.Log(appContext, e.getMessage());
                     }
 
                 }
@@ -407,7 +411,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             if (searchFiles.getCount() > 0) {
                 /*Random rnd = new Random();
                 int idx = rnd.nextInt(searchFiles.getCount() - 1);*/
-                if(idxG==searchFiles.getCount()) idxG=0;
+                if(idxG==searchFiles.getCount()-1) idxG=0;
                 else
                     idxG++;
 
@@ -419,7 +423,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             }
 
         } catch (Exception e) {
-
+            LogWrite.Log(appContext, "loadImageFromGoogleDriveNext,"+ idxG +", "+ e.getMessage());
         }
 
     }
@@ -441,7 +445,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             }
 
         } catch (Exception e) {
-
+            LogWrite.Log(appContext, "loadImageFromGoogleDrivePrev,"+ idxG +", "+ e.getMessage());
         }
 
     }
@@ -481,7 +485,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         }
 
                     } catch (Exception e3) {
-                        Log.e("MyServiceGoole", "Exception e3", e3);
+                        //Log.e("MyServiceGoole", "Exception e3", e3);
+                        LogWrite.Log(appContext,"MyServiceGoole"+ e3.getMessage());
                     }
 
 
@@ -511,6 +516,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
 
+        //mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
         mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
 
         checkPermision();
