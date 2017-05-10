@@ -31,6 +31,7 @@ import android.os.Handler;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 
 import android.support.v4.app.Fragment;
@@ -152,6 +153,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     private static MetadataBuffer searchFiles = null;
     private static int idxG=0;
+    private static int idxFLocal=-1;
 
 
     public void saveFileToDrive() {
@@ -755,7 +757,29 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                             mGoogleApiClient.disconnect();
                         saveGoogleDrive = false;
                         mGoogleApiClient.connect();
-                    } else {
+                    }
+                    else  if (sn == 4)
+                    {
+                        bitmap = getFromModile(getImageName());
+                        mImageView.post(new Runnable() {
+                            public void run() {
+                                if (bitmap != null) {
+                                    setImageToView(bitmap);
+                                }
+                                try {
+                                    imageButton.clearAnimation();
+                                    imageButton.setEnabled(true);
+                                    imageButton.setAlpha(1F);
+                                    mImageView.setEnabled(true);
+                                    mImageView.setAlpha(1F);
+                                } catch (Exception ea) {
+                                    ea.printStackTrace();
+                                }
+
+                            }
+                            });
+                    }
+                    else {
                         bitmap = loadImageFromNetwork(sn);
                         mImageView.post(new Runnable() {
                             public void run() {
@@ -1015,6 +1039,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             }
         }
 
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
@@ -1031,6 +1056,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             imageButtonMirror = (ImageButton) rootView.findViewById(R.id.button_mirror);
             imageButtonWallSystem = (ImageButton) rootView.findViewById(R.id.button_setwallsystem);
             //sp = PreferenceManager.getDefaultSharedPreferences(appContext);
+
+            switch (getArguments().getInt(ARG_SECTION_NUMBER))
+            {
+                case 1:textView.setText("ERO");break;
+                case 2:textView.setText("INET");break;
+                case 3:textView.setText("GOOGLE");break;
+                case 4:textView.setText("LOCAL");break;
+            }
 
             textView.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -1337,7 +1370,53 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             return rootView;
         }
 
+        private String getImageName() {
+            try {
+                String file_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/LockScreen";
+                File directory = new File(file_path);
+                File[] files = directory.listFiles();
+                if (idxFLocal == -1) {
+                    Random rnd = new Random();
+                    if(files.length>1)
+                        idxFLocal = rnd.nextInt(files.length - 1);
+                    else
+                        idxFLocal=0;
+                }else {
+                    switch (moveFinger) {
+                        case 1:
+                            if (idxFLocal == files.length - 1) idxFLocal = 0;
+                            else idxFLocal++;
+                            break;
+                        case -1:
+                            if (idxFLocal == 0) idxFLocal = files.length - 1;
+                            else idxFLocal--;
+                            break;
+                    }
+                }
+                textView.setText( files[idxFLocal].getName());
+                String f = file_path + "/" + files[idxFLocal].getName();
+                LogWrite.Log(appContext, f);
+                return f;
+            }catch(Exception e)
+            {
+                LogWrite.Log(appContext, e.getMessage());
+                return null;
+            }
 
+        }
+
+        private Bitmap getFromModile(String filePath) {
+            if(filePath!=null) {
+                File imgFile = new File(filePath);
+                if (imgFile.exists()) {
+                    LogWrite.Log(appContext, "decodeFile " + imgFile.getAbsolutePath());
+                    return BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                } else {
+                    LogWrite.Log(appContext, filePath + " not exists");
+                    return null;
+                }
+            }else return null;
+        }
         public Bitmap loadImageFromNetwork(int sn) {
             try {
 
@@ -1424,6 +1503,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         super.finish();
     }
 
+
+
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
@@ -1444,18 +1525,20 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         @Override
         public int getCount() {
             // Show 3 total pages.
-            return 3;
+            return 4;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "SECTION 1";
+                    return "ERO";
                 case 1:
-                    return "SECTION 2";
+                    return "INET";
                 case 2:
-                    return "SECTION 3";
+                    return "GOOGLE";
+                case 3:
+                    return "LOCAL";
             }
             return null;
         }
