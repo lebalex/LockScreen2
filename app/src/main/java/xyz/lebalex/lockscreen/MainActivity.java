@@ -154,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     private static MetadataBuffer searchFiles = null;
     private static int idxG=0;
     private static int idxFLocal=-1;
+    private static boolean samsung=false;
 
 
     public void saveFileToDrive() {
@@ -524,6 +525,19 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         checkPermision();
         sp = PreferenceManager.getDefaultSharedPreferences(this);
 
+        if(android.os.Build.MANUFACTURER.equalsIgnoreCase("samsung"))
+            samsung=true;
+
+
+        //Toast.makeText(appContext, deviceMan, Toast.LENGTH_SHORT).show();
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putBoolean("samsung", samsung);
+        if(!samsung) editor.putBoolean("flag_wall", true);
+        editor.commit();
+        LogWrite.Log(this, "samsung = "+samsung);
+
+
+
         if (!sp.getBoolean("start_service", false)) {
             int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
             int startTime = Integer.parseInt(sp.getString("update_start", "0"));
@@ -609,6 +623,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        if(!samsung) {
+            MenuItem action_licItem = menu.findItem(R.id.action_lic);
+            action_licItem.setVisible(false);
+        }
+
         return true;
     }
 
@@ -849,17 +868,23 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
 
                                     /*android 6*/
-                                    String bitmapPath = MediaStore.Images.Media.insertImage(appContext.getContentResolver(), bmOverlay, "title", null);
-                                    Uri bitmapUri = Uri.parse(bitmapPath);
-                                    fileNameforWall = getRealPathFromURI(appContext, bitmapUri);
-                                    if (sp.getBoolean("flag_wall", true)) {
-                                        Intent intent = new Intent(WallpaperManager.ACTION_CROP_AND_SET_WALLPAPER);
-                                        String mime = "image/*";
-                                        intent.setDataAndType(bitmapUri, mime);
-                                        startActivityForResult(intent, 11);
+                                    if(samsung) {
+                                        String bitmapPath = MediaStore.Images.Media.insertImage(appContext.getContentResolver(), bmOverlay, "title", null);
+                                        Uri bitmapUri = Uri.parse(bitmapPath);
+                                        fileNameforWall = getRealPathFromURI(appContext, bitmapUri);
+                                        if (sp.getBoolean("flag_wall", true)) {
+                                            Intent intent = new Intent(WallpaperManager.ACTION_CROP_AND_SET_WALLPAPER);
+                                            String mime = "image/*";
+                                            intent.setDataAndType(bitmapUri, mime);
+                                            startActivityForResult(intent, 11);
+                                        }
+                                        setSamsungWall(fileNameforWall);
+                                    }else
+                                    {
+                                        WallpaperManager wallpaperManager = WallpaperManager.getInstance(appContext);
+                                        wallpaperManager.clear();
+                                        wallpaperManager.setBitmap(bmOverlay);
                                     }
-                                    setSamsungWall(fileNameforWall);
-
 
 
                                 }
@@ -1056,6 +1081,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             imageButtonMirror = (ImageButton) rootView.findViewById(R.id.button_mirror);
             imageButtonWallSystem = (ImageButton) rootView.findViewById(R.id.button_setwallsystem);
             //sp = PreferenceManager.getDefaultSharedPreferences(appContext);
+
+
 
             switch (getArguments().getInt(ARG_SECTION_NUMBER))
             {

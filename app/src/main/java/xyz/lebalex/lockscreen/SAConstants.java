@@ -35,8 +35,9 @@ public interface SAConstants {
      * Please visit https://seap.samsung.com/license-keys/how-to for detailed
      * information on license keys and the process of generating them.
      **********************************************************************************/
-    String ELM_KEY = "KLM06-8P4YQ-8SOUS-5RDJ8-TI6J4-ZO52K";
-    String ELM_KEY2 = "4940EC56BBBCA57173BFE50728DF52B2719E209F87844A666819275A2424828624A1614E40F3C38713ECE86DB304EFDB55B9987D19FDD13A03EF5EDC54B5EF3E";
+    /*логин-пароль как gmail*/
+    String ELM_KEY = "KLM06-F3IVZ-NZLSO-AA4WL-9EPTP-F86QQ";
+    String ELM_KEY2 = "05D4CBF5D993B992C473E68606DEF509A04D4811E6834FB7241CE3167A193DB9559FFEDDEC9853DCCA2B4EAA57E069D4801D7BCD178FB1B96C6C558C013FDE6B";
 
     String MY_PREFS_NAME = "LockSAcreenApps";
     String ADMIN = "admin";

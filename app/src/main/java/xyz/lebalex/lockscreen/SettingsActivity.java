@@ -4,6 +4,7 @@ package xyz.lebalex.lockscreen;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -199,6 +200,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             bindPreferenceSummaryToValue(findPreference("update_frequency"));
             bindPreferenceSummaryToValue(findPreference("update_start"));
             //bindPreferenceSummaryToValue(findPreference("example_list"));
+            /*только для 6-ки так как там нет отдельно экран блокировки и рабочий стол*/
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this.getContext());
+            if(!sp.getBoolean("samsung", false))
+                findPreference("flag_wall").setEnabled(false);
+
         }
 
         @Override

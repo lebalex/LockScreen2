@@ -127,7 +127,9 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                     wallpaperManager.clear();
                     wallpaperManager.setBitmap(bmOverlay);
                 }
-                setSamsungWall(bmOverlay);
+                if(sp.getBoolean("samsung", false))
+                    setSamsungWall(bmOverlay);
+
                 LogWrite.Log(context, "Set Wallpaper");
             }
 
@@ -468,8 +470,8 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                                 wallpaperManager.clear();
                                 wallpaperManager.setBitmap(bmOverlay);
                             }
-
-                            setSamsungWall(bmOverlay);
+                            if(sp.getBoolean("samsung", false))
+                                setSamsungWall(bmOverlay);
                             LogWrite.Log(context, "Google set Wallpaper");
                         }else
                             LogWrite.Log(context, "Google bitmap == null");
