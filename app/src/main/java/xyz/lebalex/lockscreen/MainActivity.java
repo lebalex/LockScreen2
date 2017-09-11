@@ -98,6 +98,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -856,19 +857,23 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                     Bitmap bmOverlay = setAlpha(bitMap, Integer.parseInt(sp.getString("alpha_value", "150")));
 
                                  /*android 7*/
-                                    /*WallpaperManager wallpaperManager = WallpaperManager
+                                    WallpaperManager wallpaperManager = WallpaperManager
                                             .getInstance(appContext);
 
-                                    if (sp.getBoolean("flag_wall", true)) {
-                                        wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_SYSTEM);
-                                        wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
-                                    } else
-                                        wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
-*/
+                if (sp.getBoolean("flag_wall", true))
+                    wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_SYSTEM);
+                if(sp.getBoolean("samsung", false)) {
+                    String bitmapPath = MediaStore.Images.Media.insertImage(appContext.getContentResolver(), bmOverlay, "title", null);
+                    Uri bitmapUri = Uri.parse(bitmapPath);
+                    fileNameforWall = getRealPathFromURI(appContext, bitmapUri);
+                    setSamsungWall(fileNameforWall);
+                }else
+                    wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
+
 
 
                                     /*android 6*/
-                                    if(samsung) {
+                                    /*if(samsung) {
                                         String bitmapPath = MediaStore.Images.Media.insertImage(appContext.getContentResolver(), bmOverlay, "title", null);
                                         Uri bitmapUri = Uri.parse(bitmapPath);
                                         fileNameforWall = getRealPathFromURI(appContext, bitmapUri);
@@ -884,7 +889,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                                         WallpaperManager wallpaperManager = WallpaperManager.getInstance(appContext);
                                         wallpaperManager.clear();
                                         wallpaperManager.setBitmap(bmOverlay);
-                                    }
+                                    }*/
 
 
                                 }
@@ -1022,7 +1027,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     public void run() {
                         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
                         StrictMode.setThreadPolicy(policy);
-                        bitmap = getBitMapFromUrl(originalUrlTemp);
+                        bitmap = getBitMapFromUrl(originalUrlTemp, Integer.parseInt(sp.getString("timeout", "10")));
                         handler.post(new Runnable() {
                             public void run() {
                                 setImageToView(bitmap);
@@ -1290,7 +1295,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     }
                 }
             });
-            imageButtonWallSystem.setOnClickListener(new View.OnClickListener() {
+            /*imageButtonWallSystem.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     textView = (TextView) rootView.findViewById(R.id.section_label);
                     try {
@@ -1310,8 +1315,33 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         Toast.makeText(appContext, "error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 }
+            });*/
+            imageButtonWallSystem.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Bitmap bitMap = mImageView.getDrawingCache(true);
+                    if (bitMap != null) {
+                        //bitMap = imageForScreen(bitMap);
+                        Bitmap bmOverlay = setAlpha(bitMap, Integer.parseInt(sp.getString("alpha_value", "150")));
+                        try {
+                            String filename = "bitmap.png";
+                            FileOutputStream stream = appContext.openFileOutput(filename, Context.MODE_PRIVATE);
+                            bmOverlay.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                            stream.close();
+
+                        Intent i = new Intent(v.getContext(), FullscreenActivity.class);
+                        Bundle b = new Bundle();
+                        b.putString("image", filename);
+                        i.putExtras(b);
+
+
+                        startActivity(i);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
             });
-/*            imageButtonWallSystem.setOnClickListener(new View.OnClickListener() {
+            /*imageButtonWallSystem.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     textView = (TextView) rootView.findViewById(R.id.section_label);
                     textView.setText("set ...");
@@ -1329,7 +1359,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                                             WallpaperManager wallpaperManager = WallpaperManager
                                                     .getInstance(appContext);
-                                            wallpaperManager.setBitmap(bmOverlay);
+                                            //wallpaperManager.setBitmap(bmOverlay);
+                                            wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_SYSTEM);
 
                                             textView.setText("set Wallpaper");
                                             mImageView.setEnabled(true);
@@ -1344,8 +1375,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         }
                     }).start();
                 }
-            });
-*/
+            });*/
+
 
             imageButtonCheck.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -1466,12 +1497,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                         break;
 
                 }
+                int timeout = Integer.parseInt(sp.getString("timeout", "10"));
 
-                URL url = new URL(urls);
+                /*URL url = new URL(urls);
 
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                //urlConnection.setConnectTimeout(10000);
-                //urlConnection.setReadTimeout(10000);
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
 
@@ -1486,7 +1516,21 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 }
 
                 String resultJson = buffer.toString();
-                JSONObject dataJsonObj = null;
+                JSONObject dataJsonObj = null;*/
+
+                BufferedReader inputStream = null;
+
+                URL jsonUrl = new URL(urls);
+                URLConnection dc = jsonUrl.openConnection();
+                dc.setConnectTimeout(timeout*1000);
+                dc.setReadTimeout(timeout*1000);
+                inputStream = new BufferedReader(new InputStreamReader(
+                        dc.getInputStream()));
+
+                // read the JSON results into a string
+                String resultJson = inputStream.readLine();
+
+
 
                 try {
                     JSONArray jsonArray = new JSONArray(resultJson);
@@ -1499,7 +1543,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 }
 
 
-                return getBitMapFromUrl(urls);
+                return getBitMapFromUrl(urls, timeout);
             } catch (Exception eee) {
                 errorLoadBmp = eee.getMessage();
                 return null;
@@ -1508,16 +1552,22 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     }
 
-    private static Bitmap getBitMapFromUrl(String urls) {
+    private static Bitmap getBitMapFromUrl(String urls, int timeout) {
         try {
             originalUrlTemp = urls;
-            URL url = new URL(urls);
+            /*URL url = new URL(urls);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setConnectTimeout(10000);
             urlConnection.setReadTimeout(10000);
             urlConnection.setRequestMethod("GET");
             urlConnection.connect();
-            InputStream imageStream = urlConnection.getInputStream();
+            InputStream imageStream = urlConnection.getInputStream();*/
+
+            URL url = new URL(urls);
+            URLConnection dc = url.openConnection();
+            dc.setConnectTimeout(timeout*1000);
+            dc.setReadTimeout(timeout*1000);
+            InputStream imageStream = dc.getInputStream();
             return BitmapFactory.decodeStream(imageStream);
         } catch (Exception e) {
             return null;

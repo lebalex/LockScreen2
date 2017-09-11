@@ -142,4 +142,7 @@
     <string name="non_owner_admin_removal_exception">"SecurityException: This app attempts to remove an active admin not owned by it"</string>
     <string name="security_exception">SecurityException: The caller does not have required permission</string>
 
+    <string name="title_activity_fullscreen">View Wallpaper</string>
+    <string name="pref_title_timeout">Time Out Соединения (сек)</string>
+
 </resources>

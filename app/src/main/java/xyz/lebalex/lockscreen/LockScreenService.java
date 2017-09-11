@@ -52,6 +52,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Calendar;
 import java.util.Random;
 
@@ -115,21 +116,19 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                 WallpaperManager wallpaperManager = WallpaperManager.getInstance(this);
 
                 /*android 7*/
-                /*if (sp.getBoolean("flag_wall", true)) {
+                if (sp.getBoolean("flag_wall", true))
                     wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_SYSTEM);
-                    wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
-                } else
-                    wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
-*/
-
-                /*android 6*/
-                if (sp.getBoolean("flag_wall", true)) {
-                    wallpaperManager.clear();
-                    wallpaperManager.setBitmap(bmOverlay);
-                }
                 if(sp.getBoolean("samsung", false))
                     setSamsungWall(bmOverlay);
+                else
+                    wallpaperManager.setBitmap(bmOverlay, null, true, WallpaperManager.FLAG_LOCK);
 
+                /*android 6*/
+/*
+                    wallpaperManager.clear();
+                    wallpaperManager.setBitmap(bmOverlay);
+
+*/
                 LogWrite.Log(context, "Set Wallpaper");
             }
 
@@ -197,54 +196,47 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
         LogWrite.Log(context, "loadImageFromNetwork");
         Bitmap bmp = null;
         int countLoad = 0;
-        HttpURLConnection urlConnection = null;
+        //HttpURLConnection urlConnection = null;
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
-            String[] urls = new String[2];
+            String urls = "http://lebalex.xyz/lockscreen/lockhome.php";
             switch (sn) {
                 case 1:
-                    /*urls[0] = "http://lebalex.xyz/lockscreen/erotic.php";
-                    urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";*/
-
-                    if (sp.getBoolean("home_pic", true)) {
-                        urls[0] = "http://lebalex.xyz/lockscreen/lockhome.php";
-                        urls[1] = urls[0];
-                    }else
-                    {urls[0] = "http://lebalex.xyz/lockscreen/erotic.php";
-                        urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/erotic.aspx";}
-
+                    if (sp.getBoolean("home_pic", true))
+                        urls = "http://lebalex.xyz/lockscreen/lockhome.php";
+                    else
+                        urls = "http://lebalex.xyz/lockscreen/erotic.php";
                     break;
                 case 2:
-                    urls[0] = "http://lebalex.xyz/lockscreen/lock500p.php";
-                    urls[1] = "http://lebalexwebapp.azurewebsites.net/lockscreen/rand500.aspx";
+                    urls = "http://lebalex.xyz/lockscreen/lock500p.php";
                     break;
             }
-            int sUrl = 0;
+            int timeout = Integer.parseInt(sp.getString("timeout", "10"));
 
             while (bmp == null && countLoad < 5) {
-                String select_urls = urls[sUrl];
                 try {
                     LogWrite.Log(context, "countLoad = " + countLoad);
-                    LogWrite.Log(context, "select_urls = " + select_urls);
-                    URL url = new URL(select_urls);
+                    LogWrite.Log(context, "select_urls = " + urls);
+                    /*URL url = new URL(urls);
                     urlConnection = (HttpURLConnection) url.openConnection();
-                    //urlConnection.setConnectTimeout(20000);
-                    //urlConnection.setReadTimeout(20000);
                     urlConnection.setRequestMethod("GET");
                     urlConnection.setDoInput(true);
-                    urlConnection.connect();
+                    urlConnection.connect();*/
 
-                    if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+                    BufferedReader inputStream = null;
+
+                    URL jsonUrl = new URL(urls);
+                    URLConnection dc = jsonUrl.openConnection();
+                    dc.setConnectTimeout(timeout*1000);
+                    dc.setReadTimeout(timeout*1000);
+                    inputStream = new BufferedReader(new InputStreamReader(
+                            dc.getInputStream()));
+                    String resultJson = inputStream.readLine();
+
+
+                    if (resultJson!=null) {
                         LogWrite.Log(context, "first step HTTP_OK");
-
-                        InputStream inputStream = urlConnection.getInputStream();
-                        StringBuffer buffer = new StringBuffer();
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                        String line;
-                        if ((line = reader.readLine()) != null) {
-                            buffer.append(line);
-                        }
-                        String resultJson = buffer.toString();
                         JSONObject dataJsonObj = null;
                         String url_json = null;
                         try {
@@ -258,10 +250,25 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
 
                         if (url_json != null) {
                             LogWrite.Log(context, "image url = " + url_json);
-                            url = new URL(url_json);
+                            URL url = new URL(url_json);
+                            dc = url.openConnection();
+                            dc.setConnectTimeout(timeout*1000);
+                            dc.setReadTimeout(timeout*1000);
+                            InputStream imageStream = dc.getInputStream();
+                            if (imageStream!=null) {
+                                bmp = BitmapFactory.decodeStream(imageStream);
+                                if (bmp != null) {
+                                    if (bmp.getHeight() < bmp.getWidth()) {
+                                        LogWrite.Log(context, "Height < Width");
+                                        bmp = null;
+                                    }
+                                }else
+                                    LogWrite.LogError(context, "bmp is null");
+                            } else
+                                LogWrite.Log(context, "second step HTTP_BAD");
+
+                            /*url = new URL(url_json);
                             urlConnection = (HttpURLConnection) url.openConnection();
-                            //urlConnection.setConnectTimeout(20000);
-                            //urlConnection.setReadTimeout(20000);
                             urlConnection.setRequestMethod("GET");
                             urlConnection.setDoInput(true);
                             urlConnection.connect();
@@ -277,7 +284,7 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
                                     }
                                 }
                             } else
-                                LogWrite.Log(context, "second step HTTP_BAD");
+                                LogWrite.Log(context, "second step HTTP_BAD");*/
                         } else {
                             LogWrite.Log(context, "url_json=null");
                         }
@@ -286,16 +293,14 @@ public class LockScreenService extends IntentService implements GoogleApiClient.
 
                 } catch (java.net.ConnectException e_t) {
                     LogWrite.LogError(context, "Network error ConnectException = " + e_t.getMessage());
-                    sUrl = (sUrl == 0) ? 1 : 0;
                     bmp = null;
                 } catch (Exception eee) {
                     LogWrite.LogError(context, "Network error = " + eee.getMessage());
-                    sUrl = (sUrl == 0) ? 1 : 0;
                     bmp = null;
-                }finally {
+                }/*finally {
                     if(urlConnection!=null)
                         urlConnection.disconnect();
-                }
+                }*/
 
                 countLoad++;
             }

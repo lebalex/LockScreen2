@@ -199,6 +199,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             bindPreferenceSummaryToValue(findPreference("source_load"));
             bindPreferenceSummaryToValue(findPreference("update_frequency"));
             bindPreferenceSummaryToValue(findPreference("update_start"));
+            bindPreferenceSummaryToValue(findPreference("timeout"));
             //bindPreferenceSummaryToValue(findPreference("example_list"));
             /*только для 6-ки так как там нет отдельно экран блокировки и рабочий стол*/
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this.getContext());
