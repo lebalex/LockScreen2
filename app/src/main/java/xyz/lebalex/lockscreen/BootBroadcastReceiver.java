@@ -22,6 +22,7 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
         int startTime = Integer.parseInt(sp.getString("update_start", "0"));
         if (interval > 0) {
             Intent alarmIntent = new Intent(pContext, LockScreenServiceReceiver.class);
+            alarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(pContext, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
             AlarmManager manager = (AlarmManager) pContext.getSystemService(Context.ALARM_SERVICE);
 
@@ -43,7 +44,8 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
             }
 
 
-            manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
+            //manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, interval, pendingIntent);
+            manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startCalen.getTimeInMillis(), pendingIntent);
             LogWrite.Log(pContext, "start Boot Alarm "+startCalen.get(Calendar.YEAR)+"-"+startCalen.get(Calendar.MONTH)+"-"+startCalen.get(Calendar.DATE)+" "+startCalen.get(Calendar.HOUR_OF_DAY)+":"+startCalen.get(Calendar.MINUTE)+":"+startCalen.get(Calendar.SECOND));
 
             SharedPreferences.Editor editor = sp.edit();

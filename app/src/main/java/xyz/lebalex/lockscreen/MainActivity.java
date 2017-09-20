@@ -550,37 +550,44 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     }
 
     private void startBackgroundService(int interval, int startTime) {
-        Intent alarmIntent = new Intent(this, LockScreenServiceReceiver.class);
-        PendingIntent pendingIntent;
-        pendingIntent = PendingIntent.getBroadcast(this, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        try {
+            Intent alarmIntent = new Intent(this, LockScreenServiceReceiver.class);
+            alarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+            PendingIntent pendingIntent;
+            pendingIntent = PendingIntent.getBroadcast(this, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        if (interval > 0) {
-            Calendar curentTime = Calendar.getInstance();
+            if (interval > 0) {
+                Calendar curentTime = Calendar.getInstance();
 
-            Calendar startCalen = Calendar.getInstance();
-            startCalen.set(Calendar.HOUR_OF_DAY, startTime);
-            startCalen.set(Calendar.MINUTE, 5);
-            startCalen.set(Calendar.SECOND, 0);
-            startCalen.set(Calendar.MILLISECOND, 0);
+                Calendar startCalen = Calendar.getInstance();
+                startCalen.set(Calendar.HOUR_OF_DAY, startTime);
+                startCalen.set(Calendar.MINUTE, 5);
+                startCalen.set(Calendar.SECOND, 0);
+                startCalen.set(Calendar.MILLISECOND, 0);
 
-            boolean find = false;
-            while (!find) {
-                if (curentTime.before(startCalen))
-                    find = true;
-                else
-                    startCalen.add(Calendar.MILLISECOND, interval);
+                boolean find = false;
+                while (!find) {
+                    if (curentTime.before(startCalen))
+                        find = true;
+                    else
+                        startCalen.add(Calendar.MILLISECOND, interval);
+                }
+
+
+                //manager.setRepeating(AlarmManager.RTC_WAKEUP, startCalen.getTimeInMillis(), interval, pendingIntent);
+                manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startCalen.getTimeInMillis(), pendingIntent);
+
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putBoolean("start_service", true);
+                editor.commit();
+                LogWrite.Log(this, "start Alarm " + startCalen.get(Calendar.YEAR) + "-" + startCalen.get(Calendar.MONTH) + "-" + startCalen.get(Calendar.DATE) + " " + startCalen.get(Calendar.HOUR_OF_DAY) + ":" + startCalen.get(Calendar.MINUTE) + ":" + startCalen.get(Calendar.SECOND));
+            } else {
+                LogWrite.Log(this, "stop Alarm");
             }
-
-
-            manager.setRepeating(AlarmManager.RTC_WAKEUP, startCalen.getTimeInMillis(), interval, pendingIntent);
-
-            SharedPreferences.Editor editor = sp.edit();
-            editor.putBoolean("start_service", true);
-            editor.commit();
-            LogWrite.Log(this, "start Alarm " + startCalen.get(Calendar.YEAR) + "-" + startCalen.get(Calendar.MONTH) + "-" + startCalen.get(Calendar.DATE) + " " + startCalen.get(Calendar.HOUR_OF_DAY) + ":" + startCalen.get(Calendar.MINUTE) + ":" + startCalen.get(Calendar.SECOND));
-        } else {
-            LogWrite.Log(this, "stop Alarm");
+        }catch (Exception e)
+        {
+            LogWrite.LogError(this, e.getMessage());
         }
     }
 
@@ -664,8 +671,15 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             return true;
         }
         if (id == R.id.action_restart_service) {
-            int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
-            int startTime = Integer.parseInt(sp.getString("update_start", "0"));
+            int interval = 60;
+            int startTime = 0;
+            try {
+                interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
+                startTime = Integer.parseInt(sp.getString("update_start", "0"));
+            }catch (Exception e)
+            {
+                LogWrite.LogError(this, e.getMessage());
+            }
             LogWrite.Log(this, "--restart APP, interval = " + interval / 1000 / 60);
             startBackgroundService(interval, startTime);
             PlaceholderFragment frag = (PlaceholderFragment) mViewPager.getAdapter().instantiateItem(mViewPager, mViewPager.getCurrentItem());

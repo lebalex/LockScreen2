@@ -1,5 +1,7 @@
 package xyz.lebalex.lockscreen;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,8 +25,10 @@ public class LockScreenServiceReceiver extends WakefulBroadcastReceiver {
         Calendar calen = Calendar.getInstance();
         int startTime = Integer.parseInt(sp.getString("update_start", "0"));
         if (calen.get(Calendar.HOUR_OF_DAY) >= startTime) {
-            //Intent dailyUpdater = new Intent(context, LockScreenService.class);
-            //context.startService(dailyUpdater);
+            startBackgroundService(context, Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60, startTime);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putBoolean("start_service", true);
+            editor.commit();
 
             Intent service = new Intent(context, LockScreenService.class);
             startWakefulService(context, service);
@@ -33,6 +37,45 @@ public class LockScreenServiceReceiver extends WakefulBroadcastReceiver {
         } else LogWrite.Log(context, "not time Set Wallpaper "+calen.get(Calendar.HOUR_OF_DAY) +" - "+ startTime);
 
 
+    }
+    private void startBackgroundService(Context context, int interval, int startTime) {
+        try {
+            Intent alarmIntent = new Intent(context, LockScreenServiceReceiver.class);
+            alarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+            PendingIntent pendingIntent;
+            pendingIntent = PendingIntent.getBroadcast(context, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+            if (interval > 0) {
+                Calendar curentTime = Calendar.getInstance();
+
+                Calendar startCalen = Calendar.getInstance();
+                startCalen.set(Calendar.HOUR_OF_DAY, startTime);
+                startCalen.set(Calendar.MINUTE, 5);
+                startCalen.set(Calendar.SECOND, 0);
+                startCalen.set(Calendar.MILLISECOND, 0);
+
+                boolean find = false;
+                while (!find) {
+                    if (curentTime.before(startCalen))
+                        find = true;
+                    else
+                        startCalen.add(Calendar.MILLISECOND, interval);
+                }
+
+
+                manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, startCalen.getTimeInMillis(), pendingIntent);
+            //manager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, interval, pendingIntent);
+
+
+                LogWrite.Log(context, "start next Alarm " + startCalen.get(Calendar.YEAR) + "-" + startCalen.get(Calendar.MONTH) + "-" + startCalen.get(Calendar.DATE) + " " + startCalen.get(Calendar.HOUR_OF_DAY) + ":" + startCalen.get(Calendar.MINUTE) + ":" + startCalen.get(Calendar.SECOND));
+            } else {
+                LogWrite.Log(context, "stop Alarm");
+            }
+        }catch (Exception e)
+        {
+            LogWrite.LogError(context, e.getMessage());
+        }
     }
 
 
