@@ -9,14 +9,14 @@ android {
             storePassword 'ySjdy27op'
         }
     }
-    compileSdkVersion 25
-    buildToolsVersion '25.0.3'
+    compileSdkVersion 26
+    buildToolsVersion '26.0.1'
     defaultConfig {
         applicationId "xyz.lebalex.lockscreen"
         minSdkVersion 24
         targetSdkVersion 25
         versionCode 1
-        versionName "2.0.2"
+        versionName "2.0.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
         signingConfig signingConfigs.config
@@ -42,13 +42,13 @@ dependencies {
     compile files('lib/edm.jar')
     compile files('lib/rc.jar')
     compile files('lib/license.jar')
-    compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:support-v4:26.+'
+    compile 'com.android.support:support-v4:26.+'
+    compile 'com.android.support:appcompat-v7:26.+'
+    compile 'com.android.support:design:26.+'
     compile 'com.google.android.gms:play-services:11.0.4'
-    compile 'com.android.support:mediarouter-v7:25.3.1'
-    compile 'com.android.support:palette-v7:25.3.1'
+    compile 'com.android.support:mediarouter-v7:26.+'
+    compile 'com.android.support:palette-v7:26.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha9'
     testCompile 'junit:junit:4.12'
 }
