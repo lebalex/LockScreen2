@@ -10,13 +10,13 @@ android {
         }
     }
     compileSdkVersion 26
-    buildToolsVersion '26.0.1'
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "xyz.lebalex.lockscreen"
         minSdkVersion 24
         targetSdkVersion 25
         versionCode 1
-        versionName "2.0.3"
+        versionName "2.0.4"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
         signingConfig signingConfigs.config

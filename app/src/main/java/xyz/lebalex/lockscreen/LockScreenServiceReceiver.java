@@ -25,10 +25,7 @@ public class LockScreenServiceReceiver extends WakefulBroadcastReceiver {
         Calendar calen = Calendar.getInstance();
         int startTime = Integer.parseInt(sp.getString("update_start", "0"));
         if (calen.get(Calendar.HOUR_OF_DAY) >= startTime) {
-            startBackgroundService(context, Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60, startTime);
-            SharedPreferences.Editor editor = sp.edit();
-            editor.putBoolean("start_service", true);
-            editor.commit();
+            startBackgroundService(context, Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60, startTime, sp);
 
             Intent service = new Intent(context, LockScreenService.class);
             startWakefulService(context, service);
@@ -38,7 +35,7 @@ public class LockScreenServiceReceiver extends WakefulBroadcastReceiver {
 
 
     }
-    private void startBackgroundService(Context context, int interval, int startTime) {
+    private void startBackgroundService(Context context, int interval, int startTime, SharedPreferences sp) {
         try {
             Intent alarmIntent = new Intent(context, LockScreenServiceReceiver.class);
             alarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
@@ -68,8 +65,15 @@ public class LockScreenServiceReceiver extends WakefulBroadcastReceiver {
             //manager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, interval, pendingIntent);
 
 
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putBoolean("start_service", true);
+                editor.commit();
+
                 LogWrite.Log(context, "start next Alarm " + startCalen.get(Calendar.YEAR) + "-" + startCalen.get(Calendar.MONTH) + "-" + startCalen.get(Calendar.DATE) + " " + startCalen.get(Calendar.HOUR_OF_DAY) + ":" + startCalen.get(Calendar.MINUTE) + ":" + startCalen.get(Calendar.SECOND));
             } else {
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putBoolean("start_service", false);
+                editor.commit();
                 LogWrite.Log(context, "stop Alarm");
             }
         }catch (Exception e)
