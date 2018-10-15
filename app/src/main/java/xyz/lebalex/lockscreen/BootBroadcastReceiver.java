@@ -20,10 +20,10 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(pContext);
         int interval = Integer.parseInt(sp.getString("update_frequency", "60")) * 1000 * 60;
         int startTime = Integer.parseInt(sp.getString("update_start", "0"));
+        Intent alarmIntent = new Intent(pContext, LockScreenServiceReceiver.class);
+        alarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(pContext, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         if (interval > 0) {
-            Intent alarmIntent = new Intent(pContext, LockScreenServiceReceiver.class);
-            alarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(pContext, 1001, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
             AlarmManager manager = (AlarmManager) pContext.getSystemService(Context.ALARM_SERVICE);
 
             Calendar curentTime = Calendar.getInstance();
